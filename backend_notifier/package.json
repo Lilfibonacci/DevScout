@@ -1,0 +1,16 @@
+{
+  "name": "devscout-cloud-notifier",
+  "version": "1.0.0",
+  "description": "24/7 Cloud Scraper & Telegram-like Push Notification Dispatcher for DevScout",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test:push": "node test_push.js",
+    "test:scrape": "node -e 'require(\"./scraper\").scrapeAll().then(r => console.log(JSON.stringify(r.slice(0, 3), null, 2)))'"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "firebase-admin": "^12.7.0"
+  }
+}

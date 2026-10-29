@@ -1,0 +1,49 @@
+name: DevScout 24/7 Cloud Scraper & Push Notifier
+
+on:
+  schedule:
+    # اجرا هر ۵ الی ۱۰ دقیقه به صورت خودکار، رایگان و بدون وقفه (۲۴/۷)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # امکان اجرای دستی با یک کلیک از تب Actions در گیت‌هاب
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-notify:
+    runs-on: ubuntu-latest
+    name: Scrape Portals & Push FCM Alerts
+
+    steps:
+      - name: 📥 دریافت سورس‌کد
+        uses: actions/checkout@v4
+
+      - name: ⚙️ راه‌اندازی Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend_notifier/package-lock.json
+
+      - name: 📦 نصب پیش‌نیازها
+        working-directory: backend_notifier
+        run: npm install
+
+      - name: 🚀 اجرای اسکرپر و ارسال نوتیفیکیشن فایربیس
+        working-directory: backend_notifier
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: node index.js
+
+      - name: 💾 ذخیره تاریخچه آگهی‌های ارسال‌شده
+        run: |
+          git config user.name "DevScout Cloud Bot"
+          git config user.email "bot@devscout.app"
+          git add backend_notifier/history.json || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(cloud): update notified jobs history [skip ci]"
+            git pull --rebase || true
+            git push
+          else
+            echo "No new jobs in this cycle. History unchanged."
+          fi
