@@ -205,6 +205,24 @@ async function scrapeKarlancer() {
 /**
  * ۳. جابینجا (Jobinja.ir)
  */
+const JOBINJA_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+  'Accept':
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'Accept-Language': 'fa,en-US;q=0.9,en;q=0.8',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+  'Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+  'Sec-Ch-Ua-Mobile': '?0',
+  'Sec-Ch-Ua-Platform': '"Windows"',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
+};
+
 async function scrapeJobinja() {
   const jobs = [];
   const keywords = ['flutter', 'android'];
@@ -213,7 +231,7 @@ async function scrapeJobinja() {
     try {
       const url = `https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${encodeURIComponent(kw)}&sort_by=published_at_desc`;
       const { data: html } = await axios.get(url, {
-        headers: HEADERS,
+        headers: JOBINJA_HEADERS,
         timeout: 12000,
       });
 
