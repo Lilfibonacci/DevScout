@@ -26,7 +26,7 @@ function initFirebase() {
         credential: admin.credential.cert(serviceAccount),
       });
       isInitialized = true;
-      console.log('✅ Firebase Admin initialized from FIREBASE_SERVICE_ACCOUNT_KEY env var.');
+      console.log(`✅ Firebase Admin initialized for project "${serviceAccount.project_id}" from FIREBASE_SERVICE_ACCOUNT_KEY env var.`);
       return true;
     }
 
