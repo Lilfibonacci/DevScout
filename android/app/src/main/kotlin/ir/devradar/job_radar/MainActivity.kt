@@ -2,17 +2,29 @@ package ir.devradar.job_radar
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "ir.devradar.job_radar/native_settings"
+    private val networkExecutor = Executors.newCachedThreadPool()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -70,9 +82,71 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                 }
+                "fetchUrlBypassVpn" -> {
+                    val targetUrl = call.argument<String>("url")
+                    val headers = call.argument<Map<String, String>>("headers") ?: emptyMap()
+                    if (targetUrl.isNullOrBlank()) {
+                        result.error("INVALID_URL", "URL is required", null)
+                        return@setMethodCallHandler
+                    }
+                    networkExecutor.execute {
+                        val html = fetchOverNonVpnNetwork(targetUrl, headers)
+                        mainHandler.post {
+                            result.success(html)
+                        }
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
     }
+
+    /**
+     * ارسال درخواست مستقیم از طریق شبکه وای‌فای یا دیتای سیم‌کارت ایران (NET_CAPABILITY_NOT_VPN)
+     * برای دور زدن خطای 403 فایروال آروان‌کلود جابینجا زمانی که فیلترشکن (VPN) کاربر روشن است.
+     */
+    private fun fetchOverNonVpnNetwork(urlStr: String, headers: Map<String, String>): String? {
+        try {
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            var chosenNetwork: Network? = null
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val networks = cm.allNetworks
+                for (net in networks) {
+                    val caps = cm.getNetworkCapabilities(net) ?: continue
+                    val isNotVpn = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+                    val hasInternet = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    val isWifiOrCell = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                    if (isNotVpn && hasInternet && isWifiOrCell) {
+                        chosenNetwork = net
+                        break
+                    }
+                }
+            }
+
+            val url = URL(urlStr)
+            val connection = (chosenNetwork?.openConnection(url) ?: url.openConnection()) as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            connection.instanceFollowRedirects = true
+
+            for ((k, v) in headers) {
+                connection.setRequestProperty(k, v)
+            }
+
+            val code = connection.responseCode
+            if (code in 200..299) {
+                BufferedReader(InputStreamReader(connection.inputStream, Charsets.UTF_8)).use { reader ->
+                    return reader.readText()
+                }
+            }
+        } catch (_: Exception) {
+        }
+        return null
+    }
 }
+
 

@@ -1,14 +1,16 @@
 /**
- * نقطه ورود کرون‌جاب ابری DevScout
- * اجرای دوره‌ای توسط GitHub Actions، سرور یا cron سیستم
+ * نقطه ورود کرون‌جاب و حلقه زنده (Real-Time 60s Loop) ابری DevScout
+ * اجرای ۲۴/۷ توسط GitHub Actions با چک هر ۶۰ ثانیه و تاخیر نزدیک به صفر
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const { scrapeAll } = require('./scraper');
 const { initFirebase, sendJobPushNotification } = require('./fcm');
 
 const HISTORY_FILE = path.join(__dirname, 'history.json');
+const REPO_ROOT = path.resolve(__dirname, '..');
 
 function loadHistory() {
   try {
@@ -26,9 +28,9 @@ function loadHistory() {
 function saveHistory(historySet) {
   try {
     let list = Array.from(historySet);
-    // حداکثر ۸۰۰ شناسه اخیر را نگه دار تا فایل سبک بماند
-    if (list.length > 800) {
-      list = list.slice(list.length - 600);
+    // حداکثر ۱۰۰۰ شناسه اخیر را نگه دار تا فایل سبک بماند
+    if (list.length > 1000) {
+      list = list.slice(list.length - 800);
     }
     fs.writeFileSync(
       HISTORY_FILE,
@@ -47,22 +49,53 @@ function saveHistory(historySet) {
   }
 }
 
-async function main() {
-  console.log(`\n======================================================`);
-  console.log(`[DevScout Cloud Notifier] Starting check at ${new Date().toISOString()}`);
-  console.log(`======================================================`);
+/**
+ * ذخیره آنی تاریخچه در گیت‌هاب بلافاصله پس از ارسال نوتیفیکیشن جدید
+ */
+function commitAndPushHistoryLive() {
+  if (!process.env.GITHUB_ACTIONS) return;
+  try {
+    execSync('git config user.name "DevScout Cloud Bot"', { cwd: REPO_ROOT, stdio: 'ignore' });
+    execSync('git config user.email "bot@devscout.app"', { cwd: REPO_ROOT, stdio: 'ignore' });
+    execSync('git add backend_notifier/history.json backend_notifier/jobinja_cache.json', {
+      cwd: REPO_ROOT,
+      stdio: 'ignore',
+    });
+    const status = execSync('git status --porcelain backend_notifier/', {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    }).trim();
+    if (status) {
+      execSync('git commit -m "chore(cloud): real-time update notified jobs history [skip ci]"', {
+        cwd: REPO_ROOT,
+        stdio: 'ignore',
+      });
+      execSync('git pull --rebase || true', { cwd: REPO_ROOT, stdio: 'ignore' });
+      execSync('git push || true', { cwd: REPO_ROOT, stdio: 'ignore' });
+      console.log('💾 [Git Sync] Real-time history.json synced to repository.');
+    }
+  } catch (e) {
+    console.warn('⚠️ [Git Sync Warning]:', e.message);
+  }
+}
 
-  initFirebase();
+async function runSingleCheckCycle(cycleNumber = 1) {
+  console.log(`\n------------------------------------------------------`);
+  console.log(`[DevScout Cycle #${cycleNumber}] Checking at ${new Date().toISOString()}`);
+  console.log(`------------------------------------------------------`);
 
   const history = loadHistory();
   const isFirstRun = history.size === 0;
 
-  console.log(`🔍 [1/3] Scraping live listings from Ponisha, Karlancer, Jobinja, JobVision...`);
   const allJobs = await scrapeAll();
-  console.log(`📊 Found ${allJobs.length} total active Flutter & Android opportunities.`);
+  const bySource = {};
+  for (const j of allJobs) {
+    bySource[j.source] = (bySource[j.source] || 0) + 1;
+  }
+  console.log(`📊 Active opportunities (${allJobs.length} total):`, JSON.stringify(bySource));
 
   if (allJobs.length === 0) {
-    console.log('ℹ️ No listings scraped in this cycle. Exiting cleanly.');
+    console.log('ℹ️ No listings scraped in this cycle.');
     return;
   }
 
@@ -73,47 +106,86 @@ async function main() {
     }
     saveHistory(history);
 
-    // در اولین بار اجرا، جدیدترین آگهی را به عنوان اعلان تست ارسال کن
     const sample = allJobs[0];
     console.log(`🚀 Sending initial verification push for: "${sample.title}" (${sample.source})`);
     await sendJobPushNotification(sample);
-    console.log(`✅ Baseline established. Future runs will push newly posted jobs instantly!`);
+    commitAndPushHistoryLive();
     return;
   }
 
-  // پیدا کردن آگهی‌هایی که در دیتابیس تاریخچه ثبت نشده‌اند
   const newJobs = allJobs.filter((job) => !history.has(job.id));
-  console.log(`🔔 [2/3] New un-notified jobs detected: ${newJobs.length}`);
-
   if (newJobs.length === 0) {
-    console.log(`✨ All listings are up-to-date. No new push needed.`);
+    console.log(`✨ Up-to-date. No new jobs since last 60s check.`);
     return;
   }
 
-  // ارسال اعلان حداکثر برای ۳ آگهی جدید اخیر در هر اجرا تا کاربر اسپم نشود
+  console.log(`🔔 NEW JOBS DETECTED: ${newJobs.length}`);
   const toNotify = newJobs.slice(0, 3);
   let sentCount = 0;
 
-  console.log(`📤 [3/3] Dispatching high-priority FCM notifications...`);
   for (const job of toNotify) {
     const success = await sendJobPushNotification(job);
     if (success) {
       sentCount++;
     }
-    // اضافه کردن به تاریخچه تا هرگز مجدداً ارسال نشود
     history.add(job.id);
   }
 
-  // اضافه کردن بقیه آگهی‌های جدید هم به تاریخچه
   for (const job of newJobs) {
     history.add(job.id);
   }
 
   saveHistory(history);
-  console.log(`🎉 [Done] Successfully dispatched ${sentCount} FCM notifications to subscribed phones!`);
+  commitAndPushHistoryLive();
+  console.log(`🎉 Dispatched ${sentCount} instant FCM notifications!`);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function main() {
+  initFirebase();
+
+  const isLoopMode =
+    process.argv.includes('--loop') || process.env.LOOP_MODE === 'true';
+
+  if (!isLoopMode) {
+    await runSingleCheckCycle(1);
+    return;
+  }
+
+  const durationMinutes = Number(process.env.LOOP_DURATION_MINUTES || 320);
+  const intervalSeconds = Number(process.env.CHECK_INTERVAL_SECONDS || 60);
+  const endTime = Date.now() + durationMinutes * 60 * 1000;
+
+  console.log(`======================================================`);
+  console.log(`🚀 DevScout 24/7 Real-Time Loop Started!`);
+  console.log(`⏱️  Check Interval: Every ${intervalSeconds} seconds`);
+  console.log(`⏳ Session Duration: ${durationMinutes} minutes`);
+  console.log(`======================================================`);
+
+  let cycle = 1;
+  while (Date.now() < endTime) {
+    const cycleStart = Date.now();
+    try {
+      await runSingleCheckCycle(cycle);
+    } catch (err) {
+      console.error(`⚠️ Error in cycle #${cycle}:`, err.message);
+    }
+    cycle++;
+
+    const elapsed = Date.now() - cycleStart;
+    const waitMs = Math.max(5000, intervalSeconds * 1000 - elapsed);
+    if (Date.now() + waitMs >= endTime) break;
+    await sleep(waitMs);
+  }
+
+  console.log(`✅ Loop session (${durationMinutes}m) completed cleanly. Handing off to next runner!`);
 }
 
 main().catch((err) => {
   console.error('Fatal Runner Error:', err);
   process.exit(1);
 });
+

@@ -6,6 +6,11 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const { execFile } = require('child_process');
+
+const JOBINJA_CACHE_FILE = path.join(__dirname, 'jobinja_cache.json');
 
 const HEADERS = {
   'User-Agent':
@@ -223,76 +228,281 @@ const JOBINJA_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
+function parsePersianRelativeDateIso(text, indexOffset = 0) {
+  const normalized = (text || '')
+    .replace(/۰/g, '0')
+    .replace(/۱/g, '1')
+    .replace(/۲/g, '2')
+    .replace(/۳/g, '3')
+    .replace(/۴/g, '4')
+    .replace(/۵/g, '5')
+    .replace(/۶/g, '6')
+    .replace(/۷/g, '7')
+    .replace(/۸/g, '8')
+    .replace(/۹/g, '9');
+  const now = Date.now();
+  if (normalized.includes('امروز')) {
+    return new Date(now - (60 + indexOffset * 4) * 60 * 1000).toISOString();
+  }
+  if (normalized.includes('دیروز')) {
+    return new Date(now - (24 * 60 + indexOffset * 4) * 60 * 1000).toISOString();
+  }
+  const daysMatch = normalized.match(/(\d+)\s*روز/);
+  if (daysMatch) {
+    const d = parseInt(daysMatch[1], 10) || 2;
+    return new Date(now - (d * 24 * 60 + indexOffset * 4) * 60 * 1000).toISOString();
+  }
+  return new Date(now - (6 * 60 + indexOffset * 4) * 60 * 1000).toISOString();
+}
+
+function extractSalaryFromJobinjaContract(contractRaw) {
+  const m = (contractRaw || '').match(/\((.*?)\)/);
+  if (m && m[1]) {
+    const inside = m[1].trim();
+    if (
+      inside &&
+      !inside.includes('وارد شوید') &&
+      !inside.includes('مشاهده حقوق') &&
+      !inside.includes('توافقی')
+    ) {
+      return inside;
+    }
+  }
+  return 'توافقی';
+}
+
+function extractContractTypeFa(raw) {
+  if (!raw) return 'تمام‌وقت';
+  if (raw.includes('پاره وقت') || raw.includes('پاره‌وقت')) return 'پاره‌وقت';
+  if (raw.includes('دورکاری')) return 'دورکاری';
+  if (raw.includes('پروژه') || raw.includes('پیمانکاری')) return 'پروژه‌ای';
+  if (raw.includes('کارآموزی')) return 'کارآموزی';
+  return 'تمام‌وقت';
+}
+
+function parseJobinjaHtml(html, jobs) {
+  if (!html || !html.includes('c-jobListView__titleLink')) return 0;
+  let added = 0;
+  const $ = cheerio.load(html);
+  $('.o-listView__item, .c-jobListView__item').each((_, el) => {
+    const titleLink = $(el).find('a.c-jobListView__titleLink').first();
+    if (!titleLink.length) return;
+
+    const rawTitle = cleanText(titleLink.text());
+    const passedTime = cleanText(
+      $(el).find('.c-jobListView__passedDays').first().text() || 'امروز'
+    );
+    const title = rawTitle.replace(passedTime, '').trim();
+    const href = titleLink.attr('href') || '';
+    if (!title || !href) return;
+    if (!isRelevantMobileJob(title)) return;
+
+    const cleanHref = href.split('?')[0];
+    const codeMatch = cleanHref.match(/\/jobs\/([a-zA-Z0-9_-]+)/);
+    const id = codeMatch
+      ? `jobinja_${codeMatch[1]}`
+      : `jobinja_${Buffer.from(cleanHref).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(-16)}`;
+    if (jobs.some((j) => j.id === id)) return;
+
+    const metaItems = $(el)
+      .find('.c-jobListView__metaItem')
+      .map((i, m) => cleanText($(m).text()))
+      .get()
+      .filter(Boolean);
+
+    const company = metaItems[0] || 'شرکت معتبر در جابینجا';
+    const city = metaItems[1] || 'تهران';
+    const contractRaw = metaItems[2] || 'تمام‌وقت';
+
+    const isRemote =
+      title.includes('دورکار') ||
+      contractRaw.includes('دورکار') ||
+      title.toLowerCase().includes('remote');
+
+    const originalUrl = href.startsWith('http')
+      ? href
+      : `https://jobinja.ir${href}`;
+
+    const isFlutter =
+      title.toLowerCase().includes('flutter') ||
+      title.toLowerCase().includes('فلاتر');
+
+    const cleanPassed = passedTime.replace(/[()]/g, '').trim() || 'جدید';
+
+    jobs.push({
+      id,
+      title,
+      company,
+      source: 'جابینجا',
+      salaryOrBudget: extractSalaryFromJobinjaContract(contractRaw),
+      city,
+      workMode: isRemote ? 'دورکاری' : 'حضوری',
+      contractType: extractContractTypeFa(contractRaw),
+      publishedTimeText: cleanPassed,
+      tabCategory: 'employment',
+      topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
+      originalUrl,
+      publishedAt: parsePersianRelativeDateIso(cleanPassed, jobs.length),
+      isUrgent: $(el).text().includes('فوری'),
+    });
+    added++;
+  });
+  return added;
+}
+
+function curlViaProxy(url, proxyUrl, timeoutSec = 7) {
+  return new Promise((resolve) => {
+    execFile(
+      'curl',
+      [
+        '-x',
+        proxyUrl,
+        '-k',
+        '-s',
+        '-L',
+        '-m',
+        String(timeoutSec),
+        '-A',
+        JOBINJA_HEADERS['User-Agent'],
+        url,
+      ],
+      { maxBuffer: 5 * 1024 * 1024 },
+      (err, stdout) => {
+        if (!err && stdout && stdout.includes('c-jobListView__titleLink')) {
+          resolve(stdout);
+        } else {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+async function fetchJobinjaHtmlViaIranProxies(url) {
+  try {
+    const [pHttp, pS4, pS5, gn] = await Promise.allSettled([
+      axios.get(
+        'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=IR',
+        { timeout: 6000 }
+      ),
+      axios.get(
+        'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=socks4&timeout=5000&country=IR',
+        { timeout: 6000 }
+      ),
+      axios.get(
+        'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=socks5&timeout=5000&country=IR',
+        { timeout: 6000 }
+      ),
+      axios.get(
+        'https://proxylist.geonode.com/api/proxy-list?limit=30&page=1&sort_by=lastChecked&sort_type=desc&country=IR',
+        { timeout: 6000 }
+      ),
+    ]);
+
+    const candidates = [];
+    if (pHttp.status === 'fulfilled' && typeof pHttp.value.data === 'string') {
+      pHttp.value.data
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .forEach((p) => candidates.push(`http://${p.trim()}`));
+    }
+    if (pS4.status === 'fulfilled' && typeof pS4.value.data === 'string') {
+      pS4.value.data
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .forEach((p) => candidates.push(`socks4a://${p.trim()}`));
+    }
+    if (pS5.status === 'fulfilled' && typeof pS5.value.data === 'string') {
+      pS5.value.data
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .forEach((p) => candidates.push(`socks5h://${p.trim()}`));
+    }
+    if (gn.status === 'fulfilled' && Array.isArray(gn.value.data?.data)) {
+      gn.value.data.data.forEach((d) => {
+        let proto = d.protocols?.[0] || 'http';
+        if (proto === 'socks5') proto = 'socks5h';
+        if (proto === 'socks4') proto = 'socks4a';
+        if (proto === 'https') proto = 'http';
+        candidates.push(`${proto}://${d.ip}:${d.port}`);
+      });
+    }
+
+    const uniqueProxies = Array.from(new Set(candidates)).slice(0, 25);
+    if (uniqueProxies.length === 0) return null;
+
+    const results = await Promise.all(
+      uniqueProxies.map((proxy) => curlViaProxy(url, proxy, 7))
+    );
+    return results.find(Boolean) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function scrapeJobinja() {
   const jobs = [];
-  const keywords = ['flutter', 'android'];
+  const keywords = ['flutter', 'android', 'فلاتر'];
 
+  // لایه ۱: درخواست مستقیم (روی آی‌پی ایران در ۲۰۰ میلی‌ثانیه پاسخ می‌دهد)
+  let blockedByGeoWaf = false;
   for (const kw of keywords) {
     try {
       const url = `https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${encodeURIComponent(kw)}&sort_by=published_at_desc`;
       const { data: html } = await axios.get(url, {
         headers: JOBINJA_HEADERS,
-        timeout: 12000,
+        timeout: 10000,
       });
-
-      const $ = cheerio.load(html);
-      $('.o-listView__item, .c-jobListView__item').each((_, el) => {
-        const titleLink = $(el).find('a.c-jobListView__titleLink').first();
-        if (!titleLink.length) return;
-
-        const rawTitle = cleanText(titleLink.text());
-        const passedTime = cleanText(
-          $(el).find('.c-jobListView__passedDays').first().text() || ''
-        );
-        const title = rawTitle.replace(passedTime, '').trim();
-        const href = titleLink.attr('href') || '';
-        if (!title || !href) return;
-
-        const cleanHref = href.split('?')[0];
-        const id = `jobinja_${Buffer.from(cleanHref).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16)}`;
-        if (jobs.some((j) => j.id === id)) return;
-
-        const metaItems = $(el)
-          .find('.c-jobListView__metaItem')
-          .map((i, m) => cleanText($(m).text()))
-          .get()
-          .filter(Boolean);
-
-        const company = metaItems[0] || 'شرکت معتبر در جابینجا';
-        const city = metaItems[1] || 'تهران';
-        const contractRaw = metaItems[2] || 'تمام‌وقت';
-
-        const isRemote =
-          title.includes('دورکار') ||
-          contractRaw.includes('دورکار') ||
-          title.toLowerCase().includes('remote');
-
-        const originalUrl = href.startsWith('http')
-          ? href
-          : `https://jobinja.ir${href}`;
-
-        const isFlutter =
-          title.toLowerCase().includes('flutter') ||
-          title.toLowerCase().includes('فلاتر');
-
-        jobs.push({
-          id,
-          title,
-          company,
-          source: 'جابینجا',
-          salaryOrBudget: 'توافقی',
-          city,
-          workMode: isRemote ? 'دورکاری' : 'حضوری',
-          tabCategory: 'employment',
-          topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
-          originalUrl,
-          publishedAt: new Date().toISOString(),
-        });
-      });
+      parseJobinjaHtml(html, jobs);
     } catch (err) {
+      if (err.response?.status === 403) {
+        blockedByGeoWaf = true;
+        break;
+      }
       console.warn(`[Jobinja Scrape Warning for ${kw}]:`, err.message);
     }
   }
+
+  // لایه ۲: اگر روی سرور گیت‌هاب با خطای 403 آروان‌کلود مواجه شد، تلاش از طریق پراکسی‌های ایران
+  if (jobs.length === 0 && blockedByGeoWaf) {
+    for (const kw of ['flutter', 'android']) {
+      const url = `https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${encodeURIComponent(kw)}&sort_by=published_at_desc`;
+      const html = await fetchJobinjaHtmlViaIranProxies(url);
+      if (html) {
+        parseJobinjaHtml(html, jobs);
+      }
+    }
+  }
+
+  // اگر آگهی‌های زنده دریافت شدند، فایل کش جابینجا را به‌روز کن
+  if (jobs.length > 0) {
+    try {
+      fs.writeFileSync(
+        JOBINJA_CACHE_FILE,
+        JSON.stringify(
+          {
+            updatedAt: new Date().toISOString(),
+            count: jobs.length,
+            jobs,
+          },
+          null,
+          2
+        )
+      );
+    } catch (_) {}
+    return jobs;
+  }
+
+  // لایه ۳: بازگرداندن آخرین اسنپ‌شات معتبر جابینجا در صورت عدم پاسخ پراکسی‌ها
+  try {
+    if (fs.existsSync(JOBINJA_CACHE_FILE)) {
+      const cached = JSON.parse(fs.readFileSync(JOBINJA_CACHE_FILE, 'utf8'));
+      const list = Array.isArray(cached) ? cached : cached.jobs;
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    }
+  } catch (_) {}
 
   return jobs;
 }

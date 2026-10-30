@@ -2,21 +2,34 @@ name: DevScout 24/7 Cloud Scraper & Push Notifier
 
 on:
   schedule:
-    # اجرا هر ۵ الی ۱۰ دقیقه به صورت خودکار، رایگان و بدون وقفه (۲۴/۷)
-    - cron: '*/10 * * * *'
-  workflow_dispatch: # امکان اجرای دستی با یک کلیک از تب Actions در گیت‌هاب
+    # پشتیبان خودکار در صورت توقف حلقه
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      loop_minutes:
+        description: 'مدت زمان اجرای حلقه زنده (دقیقه)'
+        required: false
+        default: '320'
 
 permissions:
   contents: write
+  actions: write
+
+concurrency:
+  group: devscout-24-7-realtime-loop
+  cancel-in-progress: false
 
 jobs:
   scrape-and-notify:
     runs-on: ubuntu-latest
-    name: Scrape Portals & Push FCM Alerts
+    timeout-minutes: 350
+    name: Scrape Portals & Push FCM Alerts (60s Real-Time Loop)
 
     steps:
       - name: 📥 دریافت سورس‌کد
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       - name: ⚙️ راه‌اندازی Node.js
         uses: actions/setup-node@v4
@@ -29,21 +42,37 @@ jobs:
         working-directory: backend_notifier
         run: npm install
 
-      - name: 🚀 اجرای اسکرپر و ارسال نوتیفیکیشن فایربیس
+      - name: 🚀 اجرای حلقه زنده اسکرپر (چک هر ۶۰ ثانیه) و ارسال آنی فایربیس
         working-directory: backend_notifier
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-        run: node index.js
+          LOOP_MODE: 'true'
+          LOOP_DURATION_MINUTES: ${{ github.event.inputs.loop_minutes || '320' }}
+          CHECK_INTERVAL_SECONDS: '60'
+        run: node index.js --loop
 
-      - name: 💾 ذخیره تاریخچه آگهی‌های ارسال‌شده
+      - name: 💾 ذخیره نهایی تاریخچه آگهی‌های ارسال‌شده
+        if: always()
         run: |
           git config user.name "DevScout Cloud Bot"
           git config user.email "bot@devscout.app"
-          git add backend_notifier/history.json || true
+          git add backend_notifier/history.json backend_notifier/jobinja_cache.json || true
           if ! git diff --cached --quiet; then
             git commit -m "chore(cloud): update notified jobs history [skip ci]"
             git pull --rebase || true
-            git push
+            git push || true
           else
-            echo "No new jobs in this cycle. History unchanged."
+            echo "History already synced."
           fi
+
+      - name: 🔄 زنجیره‌سازی خودکار (اجرای بلافاصله نشست بعدی بدون تاخیر)
+        if: always()
+        env:
+          DISPATCH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/cloud_scraper_cron.yml/dispatches" \
+            -d '{"ref":"main","inputs":{"loop_minutes":"320"}}' || true
+

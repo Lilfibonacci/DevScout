@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:flutter/services.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
@@ -74,30 +75,88 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
     'ios',
   ];
 
+  static const MethodChannel _nativeChannel = MethodChannel(
+    'ir.devradar.job_radar/native_settings',
+  );
+
   @override
   Future<RemoteScrapeOutput> scrapeAllSources({String? customQuery}) async {
     if (_useWorkerIsolate) {
-      return Isolate.run(() => _scrapeInWorkerIsolate(customQuery));
+      final preFetchedJobinjaHtmls = await _fetchJobinjaViaNativeBypass(
+        customQuery: customQuery,
+      );
+      return Isolate.run(
+        () => _scrapeInWorkerIsolate(customQuery, preFetchedJobinjaHtmls),
+      );
     }
     return _scrapeAllInternal(customQuery: customQuery);
   }
 
+  /// دریافت صفحات جابینجا از طریق کانال نیتیو اندروید (عبور مستقیم از اینترنت ایران بدون VPN)
+  Future<List<String>> _fetchJobinjaViaNativeBypass({
+    String? customQuery,
+  }) async {
+    if (!Platform.isAndroid) return const <String>[];
+    final keywords = <String>[
+      if (customQuery != null && customQuery.trim().isNotEmpty)
+        customQuery.trim(),
+      'flutter',
+      'android',
+    ];
+    final htmlList = <String>[];
+    try {
+      final futures = keywords.take(2).map((kw) async {
+        final url =
+            'https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${Uri.encodeComponent(kw)}&sort_by=published_at_desc';
+        try {
+          final html = await _nativeChannel
+              .invokeMethod<String>('fetchUrlBypassVpn', {
+                'url': url,
+                'headers': _browserHeaders,
+              })
+              .timeout(const Duration(seconds: 10));
+          if (html != null && html.contains('c-jobListView__titleLink')) {
+            return html;
+          }
+        } catch (_) {}
+        return null;
+      });
+      final results = await Future.wait(futures);
+      for (final r in results) {
+        if (r != null && r.isNotEmpty) {
+          htmlList.add(r);
+        }
+      }
+    } catch (_) {}
+    return htmlList;
+  }
+
   static Future<RemoteScrapeOutput> _scrapeInWorkerIsolate(
     String? customQuery,
+    List<String> preFetchedJobinjaHtmls,
   ) async {
     final worker = JobRemoteDataSourceImpl._internalWorker();
     try {
-      return await worker._scrapeAllInternal(customQuery: customQuery);
+      return await worker._scrapeAllInternal(
+        customQuery: customQuery,
+        preFetchedJobinjaHtmls: preFetchedJobinjaHtmls,
+      );
     } finally {
       worker._client.close();
     }
   }
 
-  Future<RemoteScrapeOutput> _scrapeAllInternal({String? customQuery}) async {
+  Future<RemoteScrapeOutput> _scrapeAllInternal({
+    String? customQuery,
+    List<String> preFetchedJobinjaHtmls = const <String>[],
+  }) async {
     final results = await Future.wait([
       _scrapePonisha(customQuery: customQuery),
       _scrapeKarlancer(customQuery: customQuery),
-      _scrapeJobinja(customQuery: customQuery),
+      _scrapeJobinja(
+        customQuery: customQuery,
+        preFetchedHtmls: preFetchedJobinjaHtmls,
+      ),
       _scrapeJobVision(customQuery: customQuery),
     ]);
 
@@ -429,6 +488,7 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
   // ===========================================================================
   Future<(List<JobModel>, SourceScrapeStatusEntity)> _scrapeJobinja({
     String? customQuery,
+    List<String> preFetchedHtmls = const <String>[],
   }) async {
     final scraped = <JobModel>[];
     final keywords = <String>[
@@ -439,52 +499,85 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
       'فلاتر',
     ];
 
-    try {
+    // لایه ۱: اگر از طریق کانال نیتیو اندروید (بدون VPN) قبلاً دریافت شده، اول آن را پارس کن
+    for (final htmlStr in preFetchedHtmls) {
+      _parseJobinjaHtmlInto(
+        htmlStr,
+        scraped,
+        customQuery: customQuery,
+      );
+    }
+
+    // لایه ۲: درخواست مستقیم HTTP با try/catch مجزا برای هر کلیدواژه
+    if (scraped.isEmpty) {
       for (final kw in keywords.take(3)) {
-        final url =
-            'https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${Uri.encodeComponent(kw)}&sort_by=published_at_desc';
-        final response = await _client
-            .get(Uri.parse(url), headers: _browserHeaders)
-            .timeout(const Duration(seconds: 12));
+        try {
+          final url =
+              'https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${Uri.encodeComponent(kw)}&sort_by=published_at_desc';
+          final response = await _client
+              .get(Uri.parse(url), headers: _browserHeaders)
+              .timeout(const Duration(seconds: 10));
 
-        if (response.statusCode == 200) {
-          final htmlStr = utf8.decode(response.bodyBytes, allowMalformed: true);
-          final document = html_parser.parse(htmlStr);
-          final jobItems = document.querySelectorAll(
-            '.o-listView__item, .c-jobListView__item',
-          );
-
-          for (final item in jobItems) {
-            final titleLink = item.querySelector('a.c-jobListView__titleLink');
-            if (titleLink == null) continue;
-
-            final rawTitle = _cleanText(titleLink.text);
-            final passedTime = _cleanText(
-              item.querySelector('.c-jobListView__passedDays')?.text ?? 'امروز',
+          if (response.statusCode == 200) {
+            final htmlStr = utf8.decode(
+              response.bodyBytes,
+              allowMalformed: true,
             );
-            final title = rawTitle.replaceAll(passedTime, '').trim();
-            final href = titleLink.attributes['href'] ?? '';
-            if (title.isEmpty || href.isEmpty) continue;
+            _parseJobinjaHtmlInto(
+              htmlStr,
+              scraped,
+              customQuery: customQuery,
+            );
+          }
+        } catch (_) {}
+      }
+    }
 
-            final metaItems = item
-                .querySelectorAll('.c-jobListView__metaItem')
-                .map((dom.Element e) => _cleanText(e.text))
-                .where((s) => s.isNotEmpty)
-                .toList();
+    // لایه ۳: در صورت فعال بودن VPN سخت‌گیرانه یا عدم دسترسی، دریافت از فید ابری گیت‌هاب
+    if (scraped.isEmpty) {
+      try {
+        final fallbackResp = await _client
+            .get(
+              Uri.parse(
+                'https://raw.githubusercontent.com/Lilfibonacci/DevScout/main/backend_notifier/jobinja_cache.json',
+              ),
+              headers: _browserHeaders,
+            )
+            .timeout(const Duration(seconds: 10));
 
-            final company = metaItems.isNotEmpty ? metaItems[0] : 'شرکت معتبر';
-            final city = metaItems.length > 1 ? metaItems[1] : 'تهران';
-            final contractRaw =
-                metaItems.length > 2 ? metaItems[2] : 'تمام‌وقت';
+        if (fallbackResp.statusCode == 200) {
+          final jsonStr = utf8.decode(
+            fallbackResp.bodyBytes,
+            allowMalformed: true,
+          );
+          final decoded = jsonDecode(jsonStr);
+          final list = decoded is List
+              ? decoded
+              : (decoded is Map ? (decoded['jobs'] as List?) : null);
+          if (list != null) {
+            for (final raw in list) {
+              if (raw is! Map<String, dynamic>) continue;
+              final title = _cleanText((raw['title'] ?? '').toString());
+              if (title.isEmpty) continue;
+              if ((customQuery == null || customQuery.trim().isEmpty) &&
+                  !_isMobileOrAppTitle(title)) {
+                continue;
+              }
+              final id = (raw['id'] ?? '').toString();
+              if (id.isEmpty || scraped.any((e) => e.id == id)) continue;
 
-            final workMode = _detectWorkMode('$title $city $contractRaw');
-            final salary = _extractSalaryFromJobinja(contractRaw);
-            final cleanHref = href.split('?').first;
-            final id = 'jobinja_${cleanHref.hashCode.abs()}';
-            final cleanPassed =
-                passedTime.replaceAll('(', '').replaceAll(')', '').trim();
+              final company =
+                  (raw['company'] ?? raw['companyOrClient'] ?? 'شرکت معتبر')
+                      .toString();
+              final city = (raw['city'] ?? 'تهران').toString();
+              final salary = (raw['salaryOrBudget'] ?? 'توافقی').toString();
+              final workModeStr = (raw['workMode'] ?? '').toString();
+              final contractType =
+                  (raw['contractType'] ?? 'تمام‌وقت').toString();
+              final passedTimeText =
+                  (raw['publishedTimeText'] ?? 'جدید').toString();
+              final originalUrl = (raw['originalUrl'] ?? '').toString();
 
-            if (!scraped.any((e) => e.id == id)) {
               scraped.add(
                 JobModel(
                   id: id,
@@ -493,26 +586,28 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
                   source: JobSource.jobinja,
                   salaryOrBudget: salary,
                   city: city,
-                  workMode: workMode,
-                  contractType: _extractContractType(contractRaw),
+                  workMode: _detectWorkMode('$title $city $workModeStr'),
+                  contractType: contractType,
                   description:
-                      'آگهی استخدام «$title» در شرکت «$company» واقع در $city.\nجزئیات قرارداد و حقوق: $contractRaw\nبرای مشاهده شرح کامل وظایف و ارسال مستقیم رزومه، دکمه مشاهده در جابینجا را لمس کنید.',
-                  skills: _detectSkills('$title $contractRaw'),
-                  publishedTimeText: cleanPassed,
-                  publishedAt: _parsePersianRelativeDate(
-                    cleanPassed,
-                    indexOffset: scraped.length,
-                  ),
-                  originalUrl:
-                      href.startsWith('http') ? href : 'https://jobinja.ir$href',
-                  isUrgent: item.text.contains('فوری'),
+                      'آگهی استخدام «$title» در شرکت «$company» واقع در $city.\nنوع همکاری: $contractType\nبرای مشاهده شرح کامل وظایف و ارسال مستقیم رزومه، دکمه مشاهده در جابینجا را لمس کنید.',
+                  skills: _detectSkills('$title $contractType'),
+                  publishedTimeText: passedTimeText,
+                  publishedAt: DateTime.tryParse(
+                        (raw['publishedAt'] ?? '').toString(),
+                      ) ??
+                      _parsePersianRelativeDate(
+                        passedTimeText,
+                        indexOffset: scraped.length,
+                      ),
+                  originalUrl: originalUrl,
+                  isUrgent: raw['isUrgent'] == true,
                 ),
               );
             }
           }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     if (scraped.isNotEmpty) {
       return (
@@ -535,6 +630,82 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
         statusMessage: 'خطا در اتصال به جابینجا',
       ),
     );
+  }
+
+  void _parseJobinjaHtmlInto(
+    String htmlStr,
+    List<JobModel> scraped, {
+    String? customQuery,
+  }) {
+    final document = html_parser.parse(htmlStr);
+    final jobItems = document.querySelectorAll(
+      '.o-listView__item, .c-jobListView__item',
+    );
+
+    for (final item in jobItems) {
+      final titleLink = item.querySelector('a.c-jobListView__titleLink');
+      if (titleLink == null) continue;
+
+      final rawTitle = _cleanText(titleLink.text);
+      final passedTime = _cleanText(
+        item.querySelector('.c-jobListView__passedDays')?.text ?? 'امروز',
+      );
+      final title = rawTitle.replaceAll(passedTime, '').trim();
+      final href = titleLink.attributes['href'] ?? '';
+      if (title.isEmpty || href.isEmpty) continue;
+
+      if ((customQuery == null || customQuery.trim().isEmpty) &&
+          !_isMobileOrAppTitle(title)) {
+        continue;
+      }
+
+      final metaItems = item
+          .querySelectorAll('.c-jobListView__metaItem')
+          .map((dom.Element e) => _cleanText(e.text))
+          .where((s) => s.isNotEmpty)
+          .toList();
+
+      final company = metaItems.isNotEmpty ? metaItems[0] : 'شرکت معتبر';
+      final city = metaItems.length > 1 ? metaItems[1] : 'تهران';
+      final contractRaw = metaItems.length > 2 ? metaItems[2] : 'تمام‌وقت';
+
+      final workMode = _detectWorkMode('$title $city $contractRaw');
+      final salary = _extractSalaryFromJobinja(contractRaw);
+      final cleanHref = href.split('?').first;
+      final codeMatch =
+          RegExp(r'/jobs/([a-zA-Z0-9_-]+)').firstMatch(cleanHref);
+      final id = codeMatch != null
+          ? 'jobinja_${codeMatch.group(1)}'
+          : 'jobinja_${cleanHref.hashCode.abs()}';
+      final cleanPassed =
+          passedTime.replaceAll('(', '').replaceAll(')', '').trim();
+
+      if (!scraped.any((e) => e.id == id)) {
+        scraped.add(
+          JobModel(
+            id: id,
+            title: title,
+            companyOrClient: company,
+            source: JobSource.jobinja,
+            salaryOrBudget: salary,
+            city: city,
+            workMode: workMode,
+            contractType: _extractContractType(contractRaw),
+            description:
+                'آگهی استخدام «$title» در شرکت «$company» واقع در $city.\nجزئیات قرارداد و حقوق: $contractRaw\nبرای مشاهده شرح کامل وظایف و ارسال مستقیم رزومه، دکمه مشاهده در جابینجا را لمس کنید.',
+            skills: _detectSkills('$title $contractRaw'),
+            publishedTimeText: cleanPassed,
+            publishedAt: _parsePersianRelativeDate(
+              cleanPassed,
+              indexOffset: scraped.length,
+            ),
+            originalUrl:
+                href.startsWith('http') ? href : 'https://jobinja.ir$href',
+            isUrgent: item.text.contains('فوری'),
+          ),
+        );
+      }
+    }
   }
 
   // ===========================================================================
@@ -818,7 +989,12 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
     final parenMatch = RegExp(r'\((.*?)\)').firstMatch(contractRaw);
     if (parenMatch != null) {
       final inside = parenMatch.group(1)!.trim();
-      if (inside.isNotEmpty) return inside;
+      if (inside.isNotEmpty &&
+          !inside.contains('وارد شوید') &&
+          !inside.contains('مشاهده حقوق') &&
+          !inside.contains('توافقی')) {
+        return inside;
+      }
     }
     return 'توافقی';
   }

@@ -40,12 +40,41 @@ class JobRepositoryImpl implements JobRepository {
       customQuery: customQuery,
     );
 
-    var jobs = output.jobs;
+    final cachedJobs = await localDataSource.getCachedJobs();
+    final statuses = Map<JobSource, SourceScrapeStatusEntity>.from(
+      output.sourceStatuses,
+    );
+
+    var jobs = List.of(output.jobs);
     if (jobs.isNotEmpty) {
+      // اگر یکی از سایت‌ها (مثلاً جابینجا در زمان قطعی موقت یا VPN) خطا داد،
+      // آگهی‌های کش‌شده قبلی همان سایت را حفظ کن تا لیست آن سایت خالی نشود.
+      for (final source in JobSource.values) {
+        final st = statuses[source];
+        if (st == null || !st.isLiveScraped || st.count == 0) {
+          final fallbackForSource =
+              cachedJobs.where((j) => j.source == source).toList();
+          if (fallbackForSource.isNotEmpty) {
+            for (final item in fallbackForSource) {
+              if (!jobs.any((existing) => existing.id == item.id)) {
+                jobs.add(item);
+              }
+            }
+            statuses[source] = SourceScrapeStatusEntity(
+              source: source,
+              isLiveScraped: false,
+              count: fallbackForSource.length,
+              statusMessage:
+                  'از حافظه کش (${fallbackForSource.length} آگهی ذخیره شده)',
+            );
+          }
+        }
+      }
+      jobs.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
       await localDataSource.cacheJobs(jobs);
     } else {
       // در صورت عدم دسترسی موقت به شبکه، بازگرداندن آخرین کش مرتب‌شده
-      jobs = await localDataSource.getCachedJobs();
+      jobs = cachedJobs;
     }
 
     final newlyNotifiedCount = await notificationService.notifyNewScrapedJobs(
@@ -55,7 +84,7 @@ class JobRepositoryImpl implements JobRepository {
 
     return ScrapeSummaryEntity(
       jobs: jobs,
-      sourceStatuses: output.sourceStatuses,
+      sourceStatuses: statuses,
       fetchedAt: output.fetchedAt,
       newlyNotifiedCount: newlyNotifiedCount,
     );
