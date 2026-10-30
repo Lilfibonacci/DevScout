@@ -474,35 +474,43 @@ async function scrapeJobinja() {
     }
   }
 
-  // اگر آگهی‌های زنده دریافت شدند، فایل کش جابینجا را به‌روز کن
+  // اگر آگهی‌های زنده دریافت شدند، آن‌ها را با کش قبلی ادغام و ذخیره کن تا هیچ آگهی فلاتر/اندرویدی حذف نشود
+  let cachedList = [];
+  try {
+    if (fs.existsSync(JOBINJA_CACHE_FILE)) {
+      const cached = JSON.parse(fs.readFileSync(JOBINJA_CACHE_FILE, 'utf8'));
+      cachedList = Array.isArray(cached) ? cached : cached.jobs || [];
+    }
+  } catch (_) {}
+
   if (jobs.length > 0) {
+    for (const oldJob of cachedList) {
+      if (oldJob && oldJob.id && !jobs.some((j) => j.id === oldJob.id)) {
+        jobs.push(oldJob);
+      }
+    }
+    const merged = jobs.slice(0, 45);
     try {
       fs.writeFileSync(
         JOBINJA_CACHE_FILE,
         JSON.stringify(
           {
             updatedAt: new Date().toISOString(),
-            count: jobs.length,
-            jobs,
+            count: merged.length,
+            jobs: merged,
           },
           null,
           2
         )
       );
     } catch (_) {}
-    return jobs;
+    return merged;
   }
 
   // لایه ۳: بازگرداندن آخرین اسنپ‌شات معتبر جابینجا در صورت عدم پاسخ پراکسی‌ها
-  try {
-    if (fs.existsSync(JOBINJA_CACHE_FILE)) {
-      const cached = JSON.parse(fs.readFileSync(JOBINJA_CACHE_FILE, 'utf8'));
-      const list = Array.isArray(cached) ? cached : cached.jobs;
-      if (Array.isArray(list) && list.length > 0) {
-        return list;
-      }
-    }
-  } catch (_) {}
+  if (cachedList.length > 0) {
+    return cachedList;
+  }
 
   return jobs;
 }

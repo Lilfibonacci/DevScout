@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-10-30T12:22:56.976Z",
-  "count": 18,
+  "updatedAt": "2026-10-30T12:24:31.907Z",
+  "count": 30,
   "jobs": [
     {
       "id": "jobinja_tpHI",
@@ -14,8 +14,200 @@
       "publishedTimeText": "۲ روز پیش",
       "tabCategory": "employment",
       "topic": "flutter_jobs",
-      "originalUrl": "https://jobinja.ir/companies/dadeh-parvaran-mahda/jobs/tpHI/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-flutter-%D8%A2%D9%82%D8%A7-%D8%AF%D8%B1-%D8%AF%D8%A7%D8%AF%D9%87-%D9%BE%D8%B1%D9%88%D8%B1%D8%A7%D9%86-%D9%85%D9%87%D8%AF%D8%A7?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-28T12:22:56.959Z",
+      "originalUrl": "https://jobinja.ir/companies/dadeh-parvaran-mahda/jobs/tpHI/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-flutter-%D8%A2%D9%82%D8%A7-%D8%AF%D8%B1-%D8%AF%D8%A7%D8%AF%D9%87-%D9%BE%D8%B1%D9%88%D8%B1%D8%A7%D9%86-%D9%85%D9%87%D8%AF%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-28T12:24:31.526Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tM5G",
+      "title": "Flutter Developer (مشهد)",
+      "company": "ایران هتل آنلاین | Iran Hotel Online",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "خراسان رضوی، مشهد",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۳ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/iran-hotel-online/jobs/tM5G/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-flutter-developer-%D9%85%D8%B4%D9%87%D8%AF-%D8%AF%D8%B1-%D8%A7%DB%8C%D8%B1%D8%A7%D9%86-%D9%87%D8%AA%D9%84-%D8%A2%D9%86%D9%84%D8%A7%DB%8C%D9%86?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-27T12:20:31.527Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tMlJ",
+      "title": "Senior Flutter Developer",
+      "company": "هوش مصنوعی نیک سام | Niksam AI",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "دورکاری",
+      "contractType": "دورکاری",
+      "publishedTimeText": "۴ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/niksam/jobs/tMlJ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-flutter-developer-%D8%AF%D8%B1-%D9%87%D9%88%D8%B4-%D9%85%D8%B5%D9%86%D9%88%D8%B9%DB%8C-%D9%86%DB%8C%DA%A9-%D8%B3%D8%A7%D9%85?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-26T12:16:31.527Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tM7a",
+      "title": "توسعه‌دهنده Flutter",
+      "company": "سیادت | Siadat",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۵ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/siadat/jobs/tM7a/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-flutter-%D8%AF%D8%B1-%D8%B3%DB%8C%D8%A7%D8%AF%D8%AA?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-25T12:12:31.527Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tMPk",
+      "title": "برنامه‌نویس Flutter (اصفهان)",
+      "company": "نشاط رخ | Neshatrokh",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "اصفهان، اصفهان",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۹ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/neshatrokh/jobs/tMPk/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-flutter-%D8%A7%D8%B5%D9%81%D9%87%D8%A7%D9%86-%D8%AF%D8%B1-%D9%86%D8%B4%D8%A7%D8%B7-%D8%B1%D8%AE?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-21T12:08:31.527Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tMs0",
+      "title": "توسعه‌دهنده Flutter",
+      "company": "توسعه زیرساخت های تجاری پذیرا | Pazira",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۱۱ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/pazira/jobs/tMs0/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-flutter-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%B2%DB%8C%D8%B1%D8%B3%D8%A7%D8%AE%D8%AA-%D9%87%D8%A7%DB%8C-%D8%AA%D8%AC%D8%A7%D8%B1%DB%8C-%D9%BE%D8%B0%DB%8C%D8%B1%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-19T12:04:31.528Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tYjj",
+      "title": "کارشناس Flutter",
+      "company": "توسعه و نوآوری شهر | Tosse e Va Noavari Shahr",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۱۳ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/toseea-va-noavari-shahr/jobs/tYjj/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%DA%A9%D8%A7%D8%B1%D8%B4%D9%86%D8%A7%D8%B3-flutter-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D9%88-%D9%86%D9%88%D8%A2%D9%88%D8%B1%DB%8C-%D8%B4%D9%87%D8%B1?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-17T12:00:31.528Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tuQR",
+      "title": "Flutter Developer",
+      "company": "نقش اول کیفیت | Naghsh Aval Keyfiat",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۱۵ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/naghsh-aval-keyfiat/jobs/tuQR/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-flutter-developer-%D8%AF%D8%B1-%D9%86%D9%82%D8%B4-%D8%A7%D9%88%D9%84-%DA%A9%DB%8C%D9%81%DB%8C%D8%AA?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-15T11:56:31.528Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tuWl",
+      "title": "توسعه‌دهنده Flutter) Back-End -مشهد)",
+      "company": "نوآوران توسعه کسب و کار پاژ | Pazhnet",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "خراسان رضوی، مشهد",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۲۲ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/pazhnet/jobs/tuWl/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-flutter-back-end-%D9%85%D8%B4%D9%87%D8%AF-%D8%AF%D8%B1-%D9%86%D9%88%D8%A2%D9%88%D8%B1%D8%A7%D9%86-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%DA%A9%D8%B3%D8%A8-%D9%88-%DA%A9%D8%A7%D8%B1-%D9%BE%D8%A7%DA%98?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-08T11:52:31.528Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tEH1",
+      "title": "Senior Flutter Developer (مشهد)",
+      "company": "گروه حقوق آسیا | Asia Law Group",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "خراسان رضوی، مشهد",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۲۴ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/asia-free-higher-education-institute/jobs/tEH1/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-flutter-developer-%D9%85%D8%B4%D9%87%D8%AF-%D8%AF%D8%B1-%DA%AF%D8%B1%D9%88%D9%87-%D8%AD%D9%82%D9%88%D9%82-%D8%A2%D8%B3%DB%8C%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-06T11:48:31.528Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tEA6",
+      "title": "توسعه‌دهنده Flutter",
+      "company": "دایا تدبیر کارا | Dayatek",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۳۴ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/dayatek/jobs/tEA6/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-flutter-%D8%AF%D8%B1-%D8%AF%D8%A7%DB%8C%D8%A7-%D8%AA%D8%AF%D8%A8%DB%8C%D8%B1-%DA%A9%D8%A7%D8%B1%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-26T11:44:31.529Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_tVFA",
+      "title": "توسعه‌دهنده Flutter",
+      "company": "بارمان پارسه امرتات | Barman Parse Emertat",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "تهران، تهران",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۴۳ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/barman-parse-emertat/jobs/tVFA/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-flutter-%D8%AF%D8%B1-%D8%A8%D8%A7%D8%B1%D9%85%D8%A7%D9%86-%D9%BE%D8%A7%D8%B1%D8%B3%D9%87-%D8%A7%D9%85%D8%B1%D8%AA%D8%A7%D8%AA?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-17T11:40:31.529Z",
+      "isUrgent": false
+    },
+    {
+      "id": "jobinja_to7d",
+      "title": "Flutter Developer (ساری)",
+      "company": "درنیکا | DORNICA",
+      "source": "جابینجا",
+      "salaryOrBudget": "توافقی",
+      "city": "مازندران، ساری",
+      "workMode": "حضوری",
+      "contractType": "تمام‌وقت",
+      "publishedTimeText": "۵۸ روز پیش",
+      "tabCategory": "employment",
+      "topic": "flutter_jobs",
+      "originalUrl": "https://jobinja.ir/companies/dornica-4/jobs/to7d/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-flutter-developer-%D8%B3%D8%A7%D8%B1%DB%8C-%D8%AF%D8%B1-%D8%AF%D8%B1%D9%86%DB%8C%DA%A9%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-02T11:36:31.529Z",
       "isUrgent": false
     },
     {
@@ -30,8 +222,8 @@
       "publishedTimeText": "۳ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/studiovanak/jobs/tMIe/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-react-native-android-ios-%D8%AF%D8%B1-%D8%A7%D8%B3%D8%AA%D9%88%D8%AF%DB%8C%D9%88-%D9%88%DB%8C%D9%86%D8%A7%DA%A9?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-27T12:18:56.960Z",
+      "originalUrl": "https://jobinja.ir/companies/studiovanak/jobs/tMIe/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-react-native-android-ios-%D8%AF%D8%B1-%D8%A7%D8%B3%D8%AA%D9%88%D8%AF%DB%8C%D9%88-%D9%88%DB%8C%D9%86%D8%A7%DA%A9?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-27T11:32:31.723Z",
       "isUrgent": false
     },
     {
@@ -46,8 +238,8 @@
       "publishedTimeText": "۴ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/tofan/jobs/tMdL/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%D8%B3%D8%B1%D8%A8%D8%A7%D8%B2-%D9%81%D9%86%D8%A7%D9%88%D8%B1-%D8%A2%D9%82%D8%A7-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D9%81%D9%86%D8%A7%D9%88%D8%B1%DB%8C-%D8%A7%D8%B7%D9%84%D8%A7%D8%B9%D8%A7%D8%AA-%D8%A7%D8%B3%D8%AA%DB%8C%D9%86%D8%A7%D8%B3?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-26T12:14:56.961Z",
+      "originalUrl": "https://jobinja.ir/companies/tofan/jobs/tMdL/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%D8%B3%D8%B1%D8%A8%D8%A7%D8%B2-%D9%81%D9%86%D8%A7%D9%88%D8%B1-%D8%A2%D9%82%D8%A7-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D9%81%D9%86%D8%A7%D9%88%D8%B1%DB%8C-%D8%A7%D8%B7%D9%84%D8%A7%D8%B9%D8%A7%D8%AA-%D8%A7%D8%B3%D8%AA%DB%8C%D9%86%D8%A7%D8%B3?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-26T11:28:31.724Z",
       "isUrgent": false
     },
     {
@@ -62,8 +254,8 @@
       "publishedTimeText": "۵ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/eitaa/jobs/tMOM/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%A2%D9%82%D8%A7-%D9%82%D9%85-%D8%AF%D8%B1-%D9%BE%DB%8C%D8%A7%D9%85-%D8%B1%D8%B3%D8%A7%D9%86-%D8%A7%DB%8C%D8%AA%D8%A7?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-25T12:10:56.961Z",
+      "originalUrl": "https://jobinja.ir/companies/eitaa/jobs/tMOM/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%A2%D9%82%D8%A7-%D9%82%D9%85-%D8%AF%D8%B1-%D9%BE%DB%8C%D8%A7%D9%85-%D8%B1%D8%B3%D8%A7%D9%86-%D8%A7%DB%8C%D8%AA%D8%A7?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-25T11:24:31.724Z",
       "isUrgent": false
     },
     {
@@ -78,8 +270,8 @@
       "publishedTimeText": "۱۰ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/zoodpaz-studio/jobs/tEN8/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%AF%D8%B1-%D8%A7%D8%B3%D8%AA%D9%88%D8%AF%DB%8C%D9%88-%D8%B2%D9%88%D8%AF%D9%BE%D8%B2?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-20T12:06:56.962Z",
+      "originalUrl": "https://jobinja.ir/companies/zoodpaz-studio/jobs/tEN8/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%AF%D8%B1-%D8%A7%D8%B3%D8%AA%D9%88%D8%AF%DB%8C%D9%88-%D8%B2%D9%88%D8%AF%D9%BE%D8%B2?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-20T11:20:31.725Z",
       "isUrgent": false
     },
     {
@@ -94,8 +286,8 @@
       "publishedTimeText": "۱۱ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/pouyan-3/jobs/tMI0/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%BE%D9%88%DB%8C%D8%A7%D9%86?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-19T12:02:56.962Z",
+      "originalUrl": "https://jobinja.ir/companies/pouyan-3/jobs/tMI0/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%BE%D9%88%DB%8C%D8%A7%D9%86?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-19T11:16:31.725Z",
       "isUrgent": false
     },
     {
@@ -110,8 +302,8 @@
       "publishedTimeText": "۱۱ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/royaye-tose-ertebatate-pouyan/jobs/tMeJ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D8%B1%D9%88%D8%A8%DB%8C%DA%A9%D8%A7-%D9%88%D8%A7%D8%AD%D8%AF-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D9%BE%D8%B4%D8%AA%DB%8C%D8%A8%D8%A7%D9%86%DB%8C?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-19T11:58:56.962Z",
+      "originalUrl": "https://jobinja.ir/companies/royaye-tose-ertebatate-pouyan/jobs/tMeJ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D8%B1%D8%B4%D8%AF-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D8%B1%D9%88%D8%A8%DB%8C%DA%A9%D8%A7-%D9%88%D8%A7%D8%AD%D8%AF-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D9%BE%D8%B4%D8%AA%DB%8C%D8%A8%D8%A7%D9%86%DB%8C?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-19T11:12:31.725Z",
       "isUrgent": false
     },
     {
@@ -126,8 +318,8 @@
       "publishedTimeText": "۱۷ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/mahsan-1/jobs/t4Z4/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-firmware-engineer-core-%D8%AF%D8%B1-%D9%85%D9%87%D8%B3%D8%A7%D9%86?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-13T11:54:56.963Z",
+      "originalUrl": "https://jobinja.ir/companies/mahsan-1/jobs/t4Z4/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-firmware-engineer-core-%D8%AF%D8%B1-%D9%85%D9%87%D8%B3%D8%A7%D9%86?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-13T11:08:31.726Z",
       "isUrgent": false
     },
     {
@@ -142,8 +334,8 @@
       "publishedTimeText": "۲۳ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/kanda-idea/jobs/tmXa/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-developer-%D8%AF%D8%B1-%DA%A9%D9%86%D8%AF%D8%A7-%D8%A7%DB%8C%D8%AF%D9%87?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-07T11:50:56.963Z",
+      "originalUrl": "https://jobinja.ir/companies/kanda-idea/jobs/tmXa/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-developer-%D8%AF%D8%B1-%DA%A9%D9%86%D8%AF%D8%A7-%D8%A7%DB%8C%D8%AF%D9%87?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-07T11:04:31.726Z",
       "isUrgent": false
     },
     {
@@ -158,8 +350,8 @@
       "publishedTimeText": "۲۵ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/ravi-novin-payam-sepidar/jobs/tE50/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D9%BE%D9%84%DB%8C%DA%A9%DB%8C%D8%B4%D9%86-%D9%85%D9%88%D8%A8%D8%A7%DB%8C%D9%84-%D8%AF%D8%B1-%D8%A7%DB%8C%D8%AF%D9%87-%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2%D8%A7%D9%86-%D9%86%D9%88%DB%8C%D9%86-%D9%BE%DB%8C%D8%A7%D9%85-%D8%AF%D8%A7%D8%B1%D8%A7%D9%86?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-05T11:46:56.963Z",
+      "originalUrl": "https://jobinja.ir/companies/ravi-novin-payam-sepidar/jobs/tE50/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D9%BE%D9%84%DB%8C%DA%A9%DB%8C%D8%B4%D9%86-%D9%85%D9%88%D8%A8%D8%A7%DB%8C%D9%84-%D8%AF%D8%B1-%D8%A7%DB%8C%D8%AF%D9%87-%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2%D8%A7%D9%86-%D9%86%D9%88%DB%8C%D9%86-%D9%BE%DB%8C%D8%A7%D9%85-%D8%AF%D8%A7%D8%B1%D8%A7%D9%86?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-05T11:00:31.726Z",
       "isUrgent": false
     },
     {
@@ -174,8 +366,8 @@
       "publishedTimeText": "۲۶ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/amnpardaz/jobs/tEKw/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%DA%A9%D8%B1%D8%AC-%D8%AF%D8%B1-%D9%86%D8%B1%D9%85-%D8%A7%D9%81%D8%B2%D8%A7%D8%B1%DB%8C-%D8%A7%D9%85%D9%86-%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-04T11:42:56.964Z",
+      "originalUrl": "https://jobinja.ir/companies/amnpardaz/jobs/tEKw/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%DA%A9%D8%B1%D8%AC-%D8%AF%D8%B1-%D9%86%D8%B1%D9%85-%D8%A7%D9%81%D8%B2%D8%A7%D8%B1%DB%8C-%D8%A7%D9%85%D9%86-%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-04T10:56:31.727Z",
       "isUrgent": false
     },
     {
@@ -190,8 +382,8 @@
       "publishedTimeText": "۲۷ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/kiaan/jobs/tZOj/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%B3%D9%86%DB%8C%D9%88%D8%B1-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%D8%AF%D9%88%D9%84%D9%88%D9%BE%D8%B1-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%A7%D9%84%DA%A9%D8%AA%D8%B1%D9%88%D9%86%DB%8C%DA%A9-%D8%A7%D8%A8%D8%AA%DA%A9%D8%A7%D8%B1-%DA%A9%DB%8C%D8%A7%D9%86?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-10-03T11:38:56.964Z",
+      "originalUrl": "https://jobinja.ir/companies/kiaan/jobs/tZOj/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-android-developer-%D8%B3%D9%86%DB%8C%D9%88%D8%B1-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-%D8%AF%D9%88%D9%84%D9%88%D9%BE%D8%B1-%D8%AF%D8%B1-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%A7%D9%84%DA%A9%D8%AA%D8%B1%D9%88%D9%86%DB%8C%DA%A9-%D8%A7%D8%A8%D8%AA%DA%A9%D8%A7%D8%B1-%DA%A9%DB%8C%D8%A7%D9%86?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-10-03T10:52:31.727Z",
       "isUrgent": false
     },
     {
@@ -206,8 +398,8 @@
       "publishedTimeText": "۳۹ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/yaasaan/jobs/tNMB/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-developer-%D8%AF%D8%B1-%DB%8C%D8%A7%D8%B3%D8%A7%D9%86-%D8%AF%D8%A7%D8%AF%D9%87-%D9%87%D8%A7%DB%8C-%D9%87%D9%88%D8%B4%D9%85%D9%86%D8%AF?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-21T11:34:56.965Z",
+      "originalUrl": "https://jobinja.ir/companies/yaasaan/jobs/tNMB/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-android-developer-%D8%AF%D8%B1-%DB%8C%D8%A7%D8%B3%D8%A7%D9%86-%D8%AF%D8%A7%D8%AF%D9%87-%D9%87%D8%A7%DB%8C-%D9%87%D9%88%D8%B4%D9%85%D9%86%D8%AF?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-21T10:48:31.727Z",
       "isUrgent": false
     },
     {
@@ -222,8 +414,8 @@
       "publishedTimeText": "۴۴ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/mft-zf/jobs/tNey/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D9%85%D8%AF%D8%B1%D8%B3-android-kotlin-%D8%AF%D8%B1-%D9%85%D8%AC%D8%AA%D9%85%D8%B9-%D9%81%D9%86%DB%8C-%D8%AA%D9%87%D8%B1%D8%A7%D9%86-%D9%86%D9%85%D8%A7%DB%8C%D9%86%D8%AF%DA%AF%DB%8C-%D8%B2%D8%B9%D9%81%D8%B1%D8%A7%D9%86%DB%8C%D9%87?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-16T11:30:56.965Z",
+      "originalUrl": "https://jobinja.ir/companies/mft-zf/jobs/tNey/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D9%85%D8%AF%D8%B1%D8%B3-android-kotlin-%D8%AF%D8%B1-%D9%85%D8%AC%D8%AA%D9%85%D8%B9-%D9%81%D9%86%DB%8C-%D8%AA%D9%87%D8%B1%D8%A7%D9%86-%D9%86%D9%85%D8%A7%DB%8C%D9%86%D8%AF%DA%AF%DB%8C-%D8%B2%D8%B9%D9%81%D8%B1%D8%A7%D9%86%DB%8C%D9%87?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-16T10:44:31.728Z",
       "isUrgent": false
     },
     {
@@ -238,8 +430,8 @@
       "publishedTimeText": "۴۴ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/mft-zf/jobs/AUrQ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D9%85%D8%AF%D8%B1%D8%B3-%D8%AF%D9%88%D8%B1%D9%87-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%85%D8%AC%D8%AA%D9%85%D8%B9-%D9%81%D9%86%DB%8C-%D8%AA%D9%87%D8%B1%D8%A7%D9%86-%D9%86%D9%85%D8%A7%DB%8C%D9%86%D8%AF%DA%AF%DB%8C-%D8%B2%D8%B9%D9%81%D8%B1%D8%A7%D9%86%DB%8C%D9%87?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-16T11:26:56.975Z",
+      "originalUrl": "https://jobinja.ir/companies/mft-zf/jobs/AUrQ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D9%85%D8%AF%D8%B1%D8%B3-%D8%AF%D9%88%D8%B1%D9%87-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%85%D8%AC%D8%AA%D9%85%D8%B9-%D9%81%D9%86%DB%8C-%D8%AA%D9%87%D8%B1%D8%A7%D9%86-%D9%86%D9%85%D8%A7%DB%8C%D9%86%D8%AF%DA%AF%DB%8C-%D8%B2%D8%B9%D9%81%D8%B1%D8%A7%D9%86%DB%8C%D9%87?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-16T10:40:31.728Z",
       "isUrgent": false
     },
     {
@@ -254,8 +446,8 @@
       "publishedTimeText": "۴۶ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/avayejahangostarpars/jobs/tj3a/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D9%85%D9%88%D8%A8%D8%A7%DB%8C%D9%84-android-%D8%AF%D8%B1-%D8%A2%D9%88%D8%A7%DB%8C-%D8%AC%D9%87%D8%A7%D9%86-%DA%AF%D8%B3%D8%AA%D8%B1-%D9%BE%D8%A7%D8%B1%D8%B3?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-14T11:22:56.975Z",
+      "originalUrl": "https://jobinja.ir/companies/avayejahangostarpars/jobs/tj3a/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D9%85%D9%88%D8%A8%D8%A7%DB%8C%D9%84-android-%D8%AF%D8%B1-%D8%A2%D9%88%D8%A7%DB%8C-%D8%AC%D9%87%D8%A7%D9%86-%DA%AF%D8%B3%D8%AA%D8%B1-%D9%BE%D8%A7%D8%B1%D8%B3?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-14T10:36:31.728Z",
       "isUrgent": false
     },
     {
@@ -270,8 +462,8 @@
       "publishedTimeText": "۴۸ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/sayancard/jobs/Avdg/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%81%D8%B1%D8%A7%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2%D8%A7%D9%86-%D8%A2%D8%B1%D9%88%D9%86%D8%AF-%D8%A7%D9%85%DB%8C%D8%AF?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-12T11:18:56.976Z",
+      "originalUrl": "https://jobinja.ir/companies/sayancard/jobs/Avdg/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D9%87-%D9%86%D9%88%DB%8C%D8%B3-%D8%A7%D9%86%D8%AF%D8%B1%D9%88%DB%8C%D8%AF-android-%D8%AF%D8%B1-%D9%81%D8%B1%D8%A7%D9%BE%D8%B1%D8%AF%D8%A7%D8%B2%D8%A7%D9%86-%D8%A2%D8%B1%D9%88%D9%86%D8%AF-%D8%A7%D9%85%DB%8C%D8%AF?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-12T10:32:31.728Z",
       "isUrgent": false
     },
     {
@@ -286,8 +478,8 @@
       "publishedTimeText": "۵۴ روز پیش",
       "tabCategory": "employment",
       "topic": "android_jobs",
-      "originalUrl": "https://jobinja.ir/companies/mobintadbir-sharif/jobs/taNZ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-android-mid-level-%D8%AF%D8%B1-%D9%85%D8%A8%DB%8C%D9%86-%D8%AA%D8%AF%D8%A8%DB%8C%D8%B1-%D8%B4%D8%B1%DB%8C%D9%81?_ref=16&_t=38302e3139312e34362e3631",
-      "publishedAt": "2026-09-06T11:14:56.976Z",
+      "originalUrl": "https://jobinja.ir/companies/mobintadbir-sharif/jobs/taNZ/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-%D8%AA%D9%88%D8%B3%D8%B9%D9%87-%D8%AF%D9%87%D9%86%D8%AF%D9%87-android-mid-level-%D8%AF%D8%B1-%D9%85%D8%A8%DB%8C%D9%86-%D8%AA%D8%AF%D8%A8%DB%8C%D8%B1-%D8%B4%D8%B1%DB%8C%D9%81?_ref=16&_t=352e3132312e37392e313835",
+      "publishedAt": "2026-09-06T10:28:31.728Z",
       "isUrgent": false
     }
   ]
