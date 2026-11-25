@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/di/injection_container.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/services/background_worker_service.dart';
 import '../../domain/entities/job_entity.dart';
 import '../bloc/jobs_bloc.dart';
 import '../bloc/jobs_event.dart';
@@ -51,10 +49,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden) {
-      sl<BackgroundWorkerService>().scheduleCheckOnAppExit();
-    }
+    // تغییر وضعیت اپ دیگر تسک اسکرپ اجباری زمان‌بندی نمی‌کند تا از نوتیفیکیشن تکراری جلوگیری شود
   }
 
   @override

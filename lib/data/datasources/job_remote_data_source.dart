@@ -82,11 +82,34 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
   @override
   Future<RemoteScrapeOutput> scrapeAllSources({String? customQuery}) async {
     if (_useWorkerIsolate) {
-      final preFetchedJobinjaHtmls = await _fetchJobinjaViaNativeBypass(
-        customQuery: customQuery,
+      final nonJobinjaFuture = Isolate.run(
+        () => _scrapeNonJobinjaInWorkerIsolate(customQuery),
       );
-      return Isolate.run(
-        () => _scrapeInWorkerIsolate(customQuery, preFetchedJobinjaHtmls),
+      final jobinjaFuture = _fetchJobinjaViaNativeBypass(
+        customQuery: customQuery,
+      ).then(
+        (preFetchedHtmls) => Isolate.run(
+          () => _scrapeJobinjaInWorkerIsolate(customQuery, preFetchedHtmls),
+        ),
+      );
+
+      final results = await Future.wait([nonJobinjaFuture, jobinjaFuture]);
+      final nonJobinjaOutput = results[0];
+      final jobinjaOutput = results[1];
+
+      final statuses = <JobSource, SourceScrapeStatusEntity>{
+        ...nonJobinjaOutput.sourceStatuses,
+        ...jobinjaOutput.sourceStatuses,
+      };
+      final allJobs = <JobModel>[
+        ...nonJobinjaOutput.jobs,
+        ...jobinjaOutput.jobs,
+      ]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+
+      return RemoteScrapeOutput(
+        jobs: allJobs,
+        sourceStatuses: statuses,
+        fetchedAt: DateTime.now(),
       );
     }
     return _scrapeAllInternal(customQuery: customQuery);
@@ -131,15 +154,50 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
     return htmlList;
   }
 
-  static Future<RemoteScrapeOutput> _scrapeInWorkerIsolate(
+  static Future<RemoteScrapeOutput> _scrapeNonJobinjaInWorkerIsolate(
+    String? customQuery,
+  ) async {
+    final worker = JobRemoteDataSourceImpl._internalWorker();
+    try {
+      final results = await Future.wait([
+        worker._scrapePonisha(customQuery: customQuery),
+        worker._scrapeKarlancer(customQuery: customQuery),
+        worker._scrapeJobVision(customQuery: customQuery),
+      ]);
+
+      final statuses = <JobSource, SourceScrapeStatusEntity>{
+        for (final res in results) res.$2.source: res.$2,
+      };
+      final allJobs = <JobModel>[
+        ...results[0].$1,
+        ...results[1].$1,
+        ...results[2].$1,
+      ]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+
+      return RemoteScrapeOutput(
+        jobs: allJobs,
+        sourceStatuses: statuses,
+        fetchedAt: DateTime.now(),
+      );
+    } finally {
+      worker._client.close();
+    }
+  }
+
+  static Future<RemoteScrapeOutput> _scrapeJobinjaInWorkerIsolate(
     String? customQuery,
     List<String> preFetchedJobinjaHtmls,
   ) async {
     final worker = JobRemoteDataSourceImpl._internalWorker();
     try {
-      return await worker._scrapeAllInternal(
+      final res = await worker._scrapeJobinja(
         customQuery: customQuery,
-        preFetchedJobinjaHtmls: preFetchedJobinjaHtmls,
+        preFetchedHtmls: preFetchedJobinjaHtmls,
+      );
+      return RemoteScrapeOutput(
+        jobs: res.$1,
+        sourceStatuses: {res.$2.source: res.$2},
+        fetchedAt: DateTime.now(),
       );
     } finally {
       worker._client.close();
@@ -198,14 +256,22 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
     ];
 
     try {
-      for (final q in queries.take(3)) {
-        final url =
-            'https://ponisha.ir/search/projects?query=${Uri.encodeComponent(q)}';
-        final response = await _client
-            .get(Uri.parse(url), headers: _browserHeaders)
-            .timeout(const Duration(seconds: 12));
+      final responses = await Future.wait(
+        queries.take(3).map((q) async {
+          final url =
+              'https://ponisha.ir/search/projects?query=${Uri.encodeComponent(q)}';
+          try {
+            return await _client
+                .get(Uri.parse(url), headers: _browserHeaders)
+                .timeout(const Duration(seconds: 10));
+          } catch (_) {
+            return null;
+          }
+        }),
+      );
 
-        if (response.statusCode == 200) {
+      for (final response in responses) {
+        if (response != null && response.statusCode == 200) {
           final htmlStr = utf8.decode(response.bodyBytes, allowMalformed: true);
           final document = html_parser.parse(htmlStr);
           final nextDataEl = document.querySelector('script#__NEXT_DATA__');
@@ -346,17 +412,21 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
 
     try {
       final responses = await Future.wait(
-        queries.take(2).map((q) {
+        queries.take(2).map((q) async {
           final url =
               'https://www.karlancer.com/search?q=${Uri.encodeComponent(q)}';
-          return _client
-              .get(Uri.parse(url), headers: _browserHeaders)
-              .timeout(const Duration(seconds: 20));
+          try {
+            return await _client
+                .get(Uri.parse(url), headers: _browserHeaders)
+                .timeout(const Duration(seconds: 12));
+          } catch (_) {
+            return null;
+          }
         }),
       );
 
       for (final response in responses) {
-        if (response.statusCode == 200) {
+        if (response != null && response.statusCode == 200) {
           final htmlStr = utf8.decode(response.bodyBytes, allowMalformed: true);
           final document = html_parser.parse(htmlStr);
           final ngStateEl = document.querySelector('script#ng-state');
@@ -508,28 +578,34 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
       );
     }
 
-    // لایه ۲: درخواست مستقیم HTTP با try/catch مجزا برای هر کلیدواژه
+    // لایه ۲: درخواست مستقیم HTTP هم‌زمان با try/catch مجزا برای هر کلیدواژه
     if (scraped.isEmpty) {
-      for (final kw in keywords.take(3)) {
-        try {
+      final responses = await Future.wait(
+        keywords.take(3).map((kw) async {
           final url =
               'https://jobinja.ir/jobs?filters%5Bkeywords%5D%5B0%5D=${Uri.encodeComponent(kw)}&sort_by=published_at_desc';
-          final response = await _client
-              .get(Uri.parse(url), headers: _browserHeaders)
-              .timeout(const Duration(seconds: 10));
-
-          if (response.statusCode == 200) {
-            final htmlStr = utf8.decode(
-              response.bodyBytes,
-              allowMalformed: true,
-            );
-            _parseJobinjaHtmlInto(
-              htmlStr,
-              scraped,
-              customQuery: customQuery,
-            );
+          try {
+            return await _client
+                .get(Uri.parse(url), headers: _browserHeaders)
+                .timeout(const Duration(seconds: 8));
+          } catch (_) {
+            return null;
           }
-        } catch (_) {}
+        }),
+      );
+
+      for (final response in responses) {
+        if (response != null && response.statusCode == 200) {
+          final htmlStr = utf8.decode(
+            response.bodyBytes,
+            allowMalformed: true,
+          );
+          _parseJobinjaHtmlInto(
+            htmlStr,
+            scraped,
+            customQuery: customQuery,
+          );
+        }
       }
     }
 
@@ -724,27 +800,37 @@ class JobRemoteDataSourceImpl implements JobRemoteDataSource {
     ];
 
     try {
-      for (final kw in keywords.take(3)) {
-        final response = await _client
-            .post(
-              Uri.parse('https://candidateapi.jobvision.ir/api/v1/JobPost/List'),
-              headers: {
-                ..._browserHeaders,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Origin': 'https://jobvision.ir',
-                'Referer': 'https://jobvision.ir/',
-              },
-              body: jsonEncode({
-                'page': 1,
-                'pageSize': 30,
-                'keyword': kw,
-                'sortBy': 0,
-              }),
-            )
-            .timeout(const Duration(seconds: 12));
+      final responses = await Future.wait(
+        keywords.take(3).map((kw) async {
+          try {
+            return await _client
+                .post(
+                  Uri.parse(
+                    'https://candidateapi.jobvision.ir/api/v1/JobPost/List',
+                  ),
+                  headers: {
+                    ..._browserHeaders,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Origin': 'https://jobvision.ir',
+                    'Referer': 'https://jobvision.ir/',
+                  },
+                  body: jsonEncode({
+                    'page': 1,
+                    'pageSize': 30,
+                    'keyword': kw,
+                    'sortBy': 0,
+                  }),
+                )
+                .timeout(const Duration(seconds: 10));
+          } catch (_) {
+            return null;
+          }
+        }),
+      );
 
-        if (response.statusCode == 200) {
+      for (final response in responses) {
+        if (response != null && response.statusCode == 200) {
           final jsonStr = utf8.decode(response.bodyBytes, allowMalformed: true);
           final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
           final jobPosts = decoded['data']?['jobPosts'] as List<dynamic>?;

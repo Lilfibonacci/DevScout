@@ -10,6 +10,7 @@ class JobsBloc extends Bloc<JobsEvent, JobsState> {
   final GetCachedJobsUseCase getCachedJobsUseCase;
   final ScrapeJobsUseCase scrapeJobsUseCase;
   final ToggleBookmarkUseCase toggleBookmarkUseCase;
+  final Map<String, JobEntity> _pinnedJobs = <String, JobEntity>{};
 
   JobsBloc({
     required this.getCachedJobsUseCase,
@@ -25,6 +26,56 @@ class JobsBloc extends Bloc<JobsEvent, JobsState> {
     on<JobsBookmarkedOnlyToggledEvent>(_onBookmarkedOnlyToggled);
     on<JobsClearFiltersEvent>(_onClearFilters);
     on<JobBookmarkToggledEvent>(_onBookmarkToggled);
+    on<JobsUpsertJobEvent>(_onUpsertJob);
+  }
+
+  List<JobEntity> _mergeWithPinned(List<JobEntity> incoming) {
+    final byId = <String, JobEntity>{
+      for (final job in incoming) job.id: job,
+    };
+
+    final upgradedIds = <String>[];
+    for (final entry in _pinnedJobs.entries) {
+      final existing = byId[entry.key];
+      if (existing == null) {
+        byId[entry.key] = entry.value;
+      } else if (existing.description.trim().length >=
+          entry.value.description.trim().length) {
+        upgradedIds.add(entry.key);
+      } else {
+        byId[entry.key] = entry.value;
+      }
+    }
+    for (final id in upgradedIds) {
+      _pinnedJobs.remove(id);
+    }
+
+    final merged = byId.values.toList()
+      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return merged;
+  }
+
+  void _onUpsertJob(
+    JobsUpsertJobEvent event,
+    Emitter<JobsState> emit,
+  ) {
+    final incoming = event.job;
+    final existingPinned = _pinnedJobs[incoming.id];
+    if (existingPinned == null ||
+        incoming.description.trim().length >=
+            existingPinned.description.trim().length) {
+      _pinnedJobs[incoming.id] = incoming;
+    }
+
+    final merged = _mergeWithPinned(state.allJobs);
+    emit(
+      state.copyWith(
+        status: state.status == JobsStatus.initial
+            ? JobsStatus.success
+            : state.status,
+        allJobs: merged,
+      ),
+    );
   }
 
   Future<void> _onInitialized(
@@ -38,7 +89,7 @@ class JobsBloc extends Bloc<JobsEvent, JobsState> {
       emit(
         state.copyWith(
           status: JobsStatus.success,
-          allJobs: cachedData.jobs,
+          allJobs: _mergeWithPinned(cachedData.jobs),
           bookmarkedIds: cachedData.bookmarkedIds,
         ),
       );
@@ -77,7 +128,7 @@ class JobsBloc extends Bloc<JobsEvent, JobsState> {
       emit(
         state.copyWith(
           status: JobsStatus.success,
-          allJobs: summary.jobs,
+          allJobs: _mergeWithPinned(summary.jobs),
           sourceStatuses: summary.sourceStatuses,
           lastUpdated: summary.fetchedAt,
           feedbackMessage: msg,

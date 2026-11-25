@@ -282,9 +282,11 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage>
               'بررسی خودکار در زمان بسته بودن اپ (بدون نیاز به سرور)',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
-            subtitle: const Text(
-              'اسکرپ دوره‌ای ۴ سایت مرجع در پس‌زمینه اندروید حتی زمانی که اپ کاملاً بسته است',
-              style: TextStyle(fontSize: 11.5),
+            subtitle: Text(
+              _notifService.isFirebaseInitialized
+                  ? 'در زمان فعال بودن پوش ابری فایربیس، سرویس پس‌زمینه فقط کش لیست آگهی‌ها را بی‌صدا همگام‌سازی می‌کند تا اعلان تکراری ارسال نشود'
+                  : 'اسکرپ دوره‌ای ۴ سایت مرجع در پس‌زمینه اندروید حتی زمانی که اپ کاملاً بسته است',
+              style: const TextStyle(fontSize: 11.5),
             ),
             value: _backgroundWorkerEnabled,
             onChanged: (val) async {

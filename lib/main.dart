@@ -7,6 +7,7 @@ import 'core/router/app_router.dart';
 import 'core/services/background_worker_service.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/notification_tap_payload.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/bloc/jobs_bloc.dart';
 import 'presentation/bloc/jobs_event.dart';
@@ -17,16 +18,34 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initDependencies();
 
-  // اجرای فوری UI بدون معطل کردن اسپلش اسکرین برای فایربیس یا ورک‌منیجر
+  final initialPayload =
+      await sl<NotificationService>().captureInitialLaunchNotification();
+  if (initialPayload?.job != null) {
+    sl<JobsBloc>().add(JobsUpsertJobEvent(initialPayload!.job!));
+  }
+  sl<AppRouter>().configureInitialLaunch(initialPayload);
+
+  // اجرای فوری UI بدون معطل کردن کاربر برای تنظیمات شبکه فایربیس یا ورک‌منیجر
   runApp(const JobRadarApp());
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(_bootstrapServicesAfterFirstFrame());
+    unawaited(_bootstrapServicesAfterFirstFrame(initialPayload));
   });
 }
 
-Future<void> _bootstrapServicesAfterFirstFrame() async {
+Future<void> _bootstrapServicesAfterFirstFrame(
+  NotificationTapPayload? initialPayload,
+) async {
   final appRouter = sl<AppRouter>();
+
+  if (initialPayload != null &&
+      (initialPayload.jobId == null || initialPayload.jobId!.isEmpty) &&
+      initialPayload.targetUrl != null &&
+      initialPayload.targetUrl!.isNotEmpty) {
+    unawaited(
+      sl<DeepLinkService>().openOriginalJobUrl(initialPayload.targetUrl!),
+    );
+  }
 
   // بلافاصله لود آگهی‌های کش‌شده و اسکرپ در ایزوله جداگانه آغاز شود
   sl<JobsBloc>().add(const JobsInitializedEvent());
@@ -35,8 +54,11 @@ Future<void> _bootstrapServicesAfterFirstFrame() async {
     sl<DeepLinkService>().initIncomingLinks(
       onDeepLinkReceived: appRouter.handleIncomingDeepLink,
     ),
-    sl<NotificationService>().initialize(
-      onNotificationTap: appRouter.handleIncomingDeepLink,
+    sl<NotificationService>().completeBackgroundInitialization(
+      onNotificationTap: appRouter.handleNotificationTap,
+      onForegroundJobReceived: (job) {
+        sl<JobsBloc>().add(JobsUpsertJobEvent(job));
+      },
     ),
     sl<BackgroundWorkerService>().initializeAndSchedule(),
   ]);

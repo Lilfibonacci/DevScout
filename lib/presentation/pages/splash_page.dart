@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/di/injection_container.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/router/app_router.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -60,7 +62,7 @@ class _SplashPageState extends State<SplashPage>
   }
 
   void _proceedToHome() {
-    if (_hasNavigated || !mounted) return;
+    if (_hasNavigated || !mounted || sl<AppRouter>().hasHandledDeepLink) return;
     _hasNavigated = true;
     context.go('/');
   }

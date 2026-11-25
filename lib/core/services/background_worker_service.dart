@@ -44,6 +44,7 @@ void backgroundCallbackDispatcher() {
               '💰 ${sample.salaryOrBudget} | 📍 ${sample.city} (${sample.source.persianName})\nسرویس پس‌زمینه DevScout در زمان بسته بودن اپ با موفقیت اجرا شد!',
           jobId: sample.id,
           targetUrl: sample.originalUrl,
+          job: sample,
         );
       }
 
@@ -74,6 +75,7 @@ class BackgroundWorkerService {
   Future<void> initializeAndSchedule() async {
     try {
       await Workmanager().initialize(backgroundCallbackDispatcher);
+      await Workmanager().cancelByUniqueName(onCloseUniqueName);
       final enabled =
           sharedPreferences.getBool('background_worker_enabled') ?? true;
       if (enabled) {

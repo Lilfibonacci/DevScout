@@ -59,6 +59,74 @@ function formatToman(num) {
   return Number(num).toLocaleString('fa-IR');
 }
 
+function detectSkills(text) {
+  const lower = (text || '').toLowerCase();
+  const detected = [];
+  const map = {
+    Flutter: ['flutter', 'فلاتر'],
+    Dart: ['dart', 'دارت'],
+    Android: ['android', 'اندروید'],
+    Kotlin: ['kotlin', 'کاتلین'],
+    Java: ['java', 'جاوا'],
+    iOS: ['ios', 'آی او اس', 'آی‌اواس'],
+    'React Native': ['react native', 'ری اکت نیتیو'],
+    Firebase: ['firebase', 'فایربیس', 'فایر بیس'],
+    'REST API': ['api', 'rest', 'وب سرویس', 'وب‌سرویس'],
+    Senior: ['senior', 'ارشد'],
+  };
+
+  for (const [label, keys] of Object.entries(map)) {
+    if (keys.some((k) => lower.includes(k))) {
+      detected.push(label);
+    }
+  }
+
+  if (detected.length === 0) {
+    detected.push('توسعه موبایل', 'اپلیکیشن');
+  }
+  return detected.slice(0, 5);
+}
+
+function detectRoleFlags(title, description = '', skills = []) {
+  const skillsStr = Array.isArray(skills) ? skills.join(' ') : '';
+  const combined = `${title || ''} ${description || ''} ${skillsStr}`.toLowerCase();
+  const isFlutter =
+    combined.includes('flutter') ||
+    combined.includes('فلاتر') ||
+    combined.includes('dart') ||
+    combined.includes('دارت');
+  const isAndroid =
+    combined.includes('android') ||
+    combined.includes('اندروید') ||
+    combined.includes('kotlin') ||
+    combined.includes('کاتلین') ||
+    /\bjava\b/.test(combined) ||
+    combined.includes('جاوا');
+  return { isFlutter, isAndroid };
+}
+
+function detectWorkModeKey(text) {
+  const lower = (text || '').toLowerCase();
+  if (
+    lower.includes('هیبرید') ||
+    lower.includes('نیمه حضوری') ||
+    lower.includes('نیمه‌حضوری') ||
+    lower.includes('hybrid')
+  ) {
+    return 'hybrid';
+  }
+  if (
+    lower.includes('دورکار') ||
+    lower.includes('دورکاری') ||
+    lower.includes('remote') ||
+    lower.includes('غیرحضوری') ||
+    lower.includes('آنلاین')
+  ) {
+    return 'remote';
+  }
+  return 'onSite';
+}
+
 /**
  * ۱. پونیشا (Ponisha.ir)
  */
@@ -66,15 +134,26 @@ async function scrapePonisha() {
   const jobs = [];
   const queries = ['flutter', 'android'];
 
-  for (const q of queries) {
-    try {
-      const url = `https://ponisha.ir/search/projects?query=${encodeURIComponent(q)}`;
-      const { data: html } = await axios.get(url, {
-        headers: HEADERS,
-        timeout: 12000,
-      });
+  const results = await Promise.all(
+    queries.map(async (q) => {
+      try {
+        const url = `https://ponisha.ir/search/projects?query=${encodeURIComponent(q)}`;
+        const { data: html } = await axios.get(url, {
+          headers: HEADERS,
+          timeout: 12000,
+        });
+        return { q, html };
+      } catch (err) {
+        console.warn(`[Ponisha Scrape Warning for ${q}]:`, err.message);
+        return null;
+      }
+    })
+  );
 
-      const $ = cheerio.load(html);
+  for (const res of results) {
+    if (!res) continue;
+    try {
+      const $ = cheerio.load(res.html);
       const nextDataScript = $('script#__NEXT_DATA__').html();
       if (!nextDataScript) continue;
 
@@ -92,6 +171,20 @@ async function scrapePonisha() {
             const title = cleanText(item.title);
             if (!title) continue;
 
+            const description = cleanText(item.description || title);
+            const rawSkills = [];
+            if (Array.isArray(item.skills)) {
+              for (const s of item.skills) {
+                if (s && s.title) {
+                  rawSkills.push(cleanText(String(s.title)));
+                }
+              }
+            }
+            const skills =
+              rawSkills.length > 0
+                ? rawSkills.slice(0, 5)
+                : detectSkills(`${title} ${description}`);
+
             const minAmount = item.amount_min;
             const maxAmount = item.amount_max;
             let budget = 'بودجه توافقی';
@@ -104,20 +197,38 @@ async function scrapePonisha() {
               ? `https://ponisha.ir/project/${item.id}/${encodeURIComponent(slug)}`
               : `https://ponisha.ir/project/${item.id}`;
 
-            const isFlutter =
-              title.toLowerCase().includes('flutter') ||
-              title.toLowerCase().includes('فلاتر');
+            const { isFlutter, isAndroid } = detectRoleFlags(
+              title,
+              description,
+              skills
+            );
+            const bidsCount = item.project_bids_count;
+            const proposalsCountText =
+              bidsCount !== undefined && bidsCount !== null
+                ? `${bidsCount} پیشنهاد ثبت شده`
+                : null;
 
             jobs.push({
               id,
               title,
               company: '',
               source: 'پونیشا',
+              sourceKey: 'ponisha',
               salaryOrBudget: budget,
               city: 'سراسر ایران (آنلاین)',
               workMode: 'دورکاری',
+              workModeKey: 'remote',
+              contractType: 'پروژه‌ای / فریلنسری',
+              description,
+              skills,
+              publishedTimeText: 'لحظاتی پیش',
+              proposalsCountText,
+              isUrgent:
+                Array.isArray(item.promotions) && item.promotions.length > 0,
               tabCategory: 'freelance',
               topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
+              isFlutter,
+              isAndroid,
               originalUrl,
               publishedAt: item.approved_at
                 ? new Date(item.approved_at).toISOString()
@@ -127,7 +238,7 @@ async function scrapePonisha() {
         }
       }
     } catch (err) {
-      console.warn(`[Ponisha Scrape Warning for ${q}]:`, err.message);
+      console.warn(`[Ponisha Parse Warning for ${res.q}]:`, err.message);
     }
   }
 
@@ -141,15 +252,26 @@ async function scrapeKarlancer() {
   const jobs = [];
   const queries = ['flutter', 'اندروید'];
 
-  for (const q of queries) {
-    try {
-      const url = `https://www.karlancer.com/search?q=${encodeURIComponent(q)}`;
-      const { data: html } = await axios.get(url, {
-        headers: HEADERS,
-        timeout: 12000,
-      });
+  const results = await Promise.all(
+    queries.map(async (q) => {
+      try {
+        const url = `https://www.karlancer.com/search?q=${encodeURIComponent(q)}`;
+        const { data: html } = await axios.get(url, {
+          headers: HEADERS,
+          timeout: 12000,
+        });
+        return { q, html };
+      } catch (err) {
+        console.warn(`[Karlancer Scrape Warning for ${q}]:`, err.message);
+        return null;
+      }
+    })
+  );
 
-      const $ = cheerio.load(html);
+  for (const res of results) {
+    if (!res) continue;
+    try {
+      const $ = cheerio.load(res.html);
       const ngStateScript = $('script#ng-state').html();
       if (!ngStateScript) continue;
 
@@ -167,32 +289,64 @@ async function scrapeKarlancer() {
             const title = cleanText(raw.title);
             if (!title) continue;
 
+            const description = cleanText(raw.description || title);
+            const rawSkills = [];
+            if (Array.isArray(raw.skills)) {
+              for (const s of raw.skills) {
+                if (s && s.name) {
+                  rawSkills.push(cleanText(String(s.name)));
+                }
+              }
+            }
+            const skills =
+              rawSkills.length > 0
+                ? rawSkills.slice(0, 5)
+                : detectSkills(`${title} ${description}`);
+
             let budget = 'بودجه توافقی';
             if (raw.min_budget && raw.max_budget) {
               budget = `${formatToman(raw.min_budget)} تا ${formatToman(raw.max_budget)} تومان`;
             }
 
-            const city = raw.country || 'سراسر ایران';
+            const city = cleanText(raw.country || '') || 'سراسر ایران';
             const isOnsite = raw.is_onsite === true;
+            const isFulltime = raw.is_fulltime === true;
             const slug = raw.url || '';
             const originalUrl = slug
               ? `https://www.karlancer.com/projects/${encodeURIComponent(slug)}`
               : `https://www.karlancer.com/search?q=flutter`;
 
-            const isFlutter =
-              title.toLowerCase().includes('flutter') ||
-              title.toLowerCase().includes('فلاتر');
+            const { isFlutter, isAndroid } = detectRoleFlags(
+              title,
+              description,
+              skills
+            );
 
             jobs.push({
               id,
               title,
               company: '',
               source: 'کارلنسر',
+              sourceKey: 'karlancer',
               salaryOrBudget: budget,
               city,
               workMode: isOnsite ? 'حضوری' : 'دورکاری',
+              workModeKey: isOnsite ? 'onSite' : 'remote',
+              contractType: isFulltime
+                ? 'پروژه‌ای / تمام‌وقت'
+                : 'پروژه‌ای / فریلنسری',
+              description,
+              skills,
+              publishedTimeText: raw.past_time ? cleanText(String(raw.past_time)) : 'جدید',
+              proposalsCountText:
+                raw.job_duration !== undefined && raw.job_duration !== null
+                  ? `مهلت انجام: ${raw.job_duration} روز`
+                  : null,
+              isUrgent: raw.is_urgent === true || raw.is_highlight === true,
               tabCategory: 'freelance',
               topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
+              isFlutter,
+              isAndroid,
               originalUrl,
               publishedAt: raw.ladder_at || new Date().toISOString(),
             });
@@ -200,7 +354,7 @@ async function scrapeKarlancer() {
         }
       }
     } catch (err) {
-      console.warn(`[Karlancer Scrape Warning for ${q}]:`, err.message);
+      console.warn(`[Karlancer Parse Warning for ${res.q}]:`, err.message);
     }
   }
 
@@ -323,24 +477,31 @@ function parseJobinjaHtml(html, jobs) {
       ? href
       : `https://jobinja.ir${href}`;
 
-    const isFlutter =
-      title.toLowerCase().includes('flutter') ||
-      title.toLowerCase().includes('فلاتر');
-
     const cleanPassed = passedTime.replace(/[()]/g, '').trim() || 'جدید';
+    const workModeKey = detectWorkModeKey(`${title} ${city} ${contractRaw}`);
+    const contractType = extractContractTypeFa(contractRaw);
+    const description = `آگهی استخدام «${title}» در شرکت «${company}» واقع در ${city}.\nجزئیات قرارداد و حقوق: ${contractRaw}\nبرای مشاهده شرح کامل وظایف و ارسال مستقیم رزومه، دکمه مشاهده در جابینجا را لمس کنید.`;
+    const skills = detectSkills(`${title} ${contractRaw}`);
+    const { isFlutter, isAndroid } = detectRoleFlags(title, description, skills);
 
     jobs.push({
       id,
       title,
       company,
       source: 'جابینجا',
+      sourceKey: 'jobinja',
       salaryOrBudget: extractSalaryFromJobinjaContract(contractRaw),
       city,
       workMode: isRemote ? 'دورکاری' : 'حضوری',
-      contractType: extractContractTypeFa(contractRaw),
+      workModeKey,
+      contractType,
+      description,
+      skills,
       publishedTimeText: cleanPassed,
       tabCategory: 'employment',
       topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
+      isFlutter,
+      isAndroid,
       originalUrl,
       publishedAt: parsePersianRelativeDateIso(cleanPassed, jobs.length),
       isUrgent: $(el).text().includes('فوری'),
@@ -522,71 +683,116 @@ async function scrapeJobVision() {
   const jobs = [];
   const keywords = ['flutter', 'اندروید'];
 
-  for (const kw of keywords) {
-    try {
-      const response = await axios.post(
-        'https://candidateapi.jobvision.ir/api/v1/JobPost/List',
-        {
-          page: 1,
-          pageSize: 30,
-          keyword: kw,
-          sortBy: 0,
-        },
-        {
-          headers: {
-            ...HEADERS,
-            'Content-Type': 'application/json',
-            'Origin': 'https://jobvision.ir',
-            'Referer': 'https://jobvision.ir/',
+  const responses = await Promise.all(
+    keywords.map(async (kw) => {
+      try {
+        const response = await axios.post(
+          'https://candidateapi.jobvision.ir/api/v1/JobPost/List',
+          {
+            page: 1,
+            pageSize: 30,
+            keyword: kw,
+            sortBy: 0,
           },
-          httpsAgent: insecureHttpsAgent,
-          timeout: 12000,
-        }
+          {
+            headers: {
+              ...HEADERS,
+              'Content-Type': 'application/json',
+              'Origin': 'https://jobvision.ir',
+              'Referer': 'https://jobvision.ir/',
+            },
+            httpsAgent: insecureHttpsAgent,
+            timeout: 12000,
+          }
+        );
+        return { kw, data: response.data };
+      } catch (err) {
+        console.warn(`[JobVision Scrape Warning for ${kw}]:`, err.message);
+        return null;
+      }
+    })
+  );
+
+  for (const res of responses) {
+    if (!res) continue;
+    const jobPosts = res.data?.data?.jobPosts || [];
+    for (const raw of jobPosts) {
+      const id = `jobvision_${raw.id}`;
+      if (jobs.some((j) => j.id === id)) continue;
+
+      const title = cleanText(raw.title);
+      if (!title) continue;
+      if (!isRelevantMobileJob(title)) continue;
+
+      const company =
+        raw.company?.nameFa ||
+        raw.company?.nameEn ||
+        'شرکت معتبر در جاب‌ویژن';
+
+      const cityFa =
+        raw.location?.city?.titleFa ||
+        raw.location?.province?.titleFa ||
+        'تهران';
+      const regionFa = raw.location?.region?.titleFa || '';
+      const fullCity = regionFa ? `${cityFa} (${regionFa})` : cityFa;
+
+      const isRemote = raw.properties?.isRemote === true;
+      const isUrgent = raw.properties?.isUrgent === true;
+      const expYears = raw.properties?.requiredRelatedExperienceYears;
+      const workTypeFa = raw.workType?.titleFa || 'تمام‌وقت';
+      const seniorityFa = raw.seniorityLevel?.titleFa || '';
+      const industryFa =
+        raw.industry?.titleFa || 'فناوری اطلاعات و نرم‌افزار';
+      const salaryText =
+        raw.salary?.titleFa ||
+        (typeof raw.salary === 'string' ? raw.salary : 'توافقی');
+
+      const workModeKey = isRemote
+        ? 'remote'
+        : detectWorkModeKey(`${title} ${workTypeFa}`);
+      const contractType = seniorityFa
+        ? `${workTypeFa} (${seniorityFa})`
+        : workTypeFa;
+
+      const descLines = [
+        `استخدام ${title} در «${company}»`,
+        `• سطح ارشدیت: ${seniorityFa || 'کارشناس'}`,
+        `• نوع همکاری: ${workTypeFa} ${isRemote ? '(امکان دورکاری)' : ''}`.trim(),
+        `• حوزه فعالیت شرکت: ${industryFa}`,
+      ];
+      if (typeof expYears === 'number' && expYears > 0) {
+        descLines.push(`• سابقه کار مرتبط مورد نیاز: حداقل ${expYears} سال`);
+      }
+      const description = descLines.join('\n');
+      const skills = detectSkills(`${title} ${seniorityFa}`);
+      const { isFlutter, isAndroid } = detectRoleFlags(
+        title,
+        description,
+        skills
       );
 
-      const jobPosts = response.data?.data?.jobPosts || [];
-      for (const raw of jobPosts) {
-        const id = `jobvision_${raw.id}`;
-        if (jobs.some((j) => j.id === id)) continue;
-
-        const title = cleanText(raw.title);
-        if (!title) continue;
-        if (!isRelevantMobileJob(title)) continue;
-
-        const company =
-          raw.company?.nameFa ||
-          raw.company?.nameEn ||
-          'شرکت معتبر در جاب‌ویژن';
-
-        const cityFa =
-          raw.location?.city?.titleFa ||
-          raw.location?.province?.titleFa ||
-          'تهران';
-
-        const isRemote = raw.properties?.isRemote === true;
-        const salaryText =
-          raw.salary?.titleFa || (typeof raw.salary === 'string' ? raw.salary : 'توافقی');
-
-        const isFlutter =
-          title.toLowerCase().includes('flutter') ||
-          title.toLowerCase().includes('فلاتر');
-
-        jobs.push({
-          id,
-          title,
-          company,
-          source: 'جاب‌ویژن',
-          salaryOrBudget: salaryText,
-          city: cityFa,
-          workMode: isRemote ? 'دورکاری' : 'حضوری',
-          tabCategory: 'employment',
-          topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
-          originalUrl: `https://jobvision.ir/jobs/${raw.id}`,
-          publishedAt: raw.activationTime?.date || new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      console.warn(`[JobVision Scrape Warning for ${kw}]:`, err.message);
+      jobs.push({
+        id,
+        title,
+        company,
+        source: 'جاب‌ویژن',
+        sourceKey: 'jobvision',
+        salaryOrBudget: salaryText,
+        city: fullCity,
+        workMode: isRemote ? 'دورکاری' : 'حضوری',
+        workModeKey,
+        contractType,
+        description,
+        skills,
+        publishedTimeText: raw.activationTime?.beautifyFa || 'جدید',
+        isUrgent,
+        tabCategory: 'employment',
+        topic: isFlutter ? 'flutter_jobs' : 'android_jobs',
+        isFlutter,
+        isAndroid,
+        originalUrl: `https://jobvision.ir/jobs/${raw.id}`,
+        publishedAt: raw.activationTime?.date || new Date().toISOString(),
+      });
     }
   }
 

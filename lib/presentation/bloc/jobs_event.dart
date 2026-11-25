@@ -78,3 +78,12 @@ class JobBookmarkToggledEvent extends JobsEvent {
   @override
   List<Object?> get props => [jobId];
 }
+
+class JobsUpsertJobEvent extends JobsEvent {
+  final JobEntity job;
+
+  const JobsUpsertJobEvent(this.job);
+
+  @override
+  List<Object?> get props => [job];
+}

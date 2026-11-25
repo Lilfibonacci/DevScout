@@ -56,10 +56,29 @@ jobs:
         run: |
           git config user.name "DevScout Cloud Bot"
           git config user.email "bot@devscout.app"
+          git rebase --abort 2>/dev/null || true
+          git fetch origin main || true
+          node -e '
+            const fs = require("fs");
+            const { execSync } = require("child_process");
+            const { mergeHistorySets } = require("./backend_notifier/index");
+            let localIds = [];
+            try {
+              const d = JSON.parse(fs.readFileSync("backend_notifier/history.json", "utf8"));
+              localIds = Array.isArray(d) ? d : (d.seenIds || []);
+            } catch (_) {}
+            let remoteIds = [];
+            try {
+              const r = JSON.parse(execSync("git show origin/main:backend_notifier/history.json", { encoding: "utf8" }));
+              remoteIds = Array.isArray(r) ? r : (r.seenIds || []);
+            } catch (_) {}
+            const merged = Array.from(mergeHistorySets(new Set(localIds), remoteIds));
+            fs.writeFileSync("backend_notifier/history.json", JSON.stringify({ lastRun: new Date().toISOString(), count: merged.length, seenIds: merged }, null, 2));
+          '
           git add backend_notifier/history.json backend_notifier/jobinja_cache.json || true
           if ! git diff --cached --quiet; then
             git commit -m "chore(cloud): update notified jobs history [skip ci]"
-            git pull --rebase || true
+            git pull --rebase || { git rebase --abort || true; }
             git push || true
           else
             echo "History already synced."

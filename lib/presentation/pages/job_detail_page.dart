@@ -10,15 +10,59 @@ import '../bloc/jobs_bloc.dart';
 import '../bloc/jobs_event.dart';
 import '../bloc/jobs_state.dart';
 
-class JobDetailPage extends StatelessWidget {
+class JobDetailPage extends StatefulWidget {
   final String jobId;
   final JobEntity? initialJob;
+  final String? fallbackUrl;
+  final bool isPreviewOnly;
 
   const JobDetailPage({
     super.key,
     required this.jobId,
     this.initialJob,
+    this.fallbackUrl,
+    this.isPreviewOnly = false,
   });
+
+  @override
+  State<JobDetailPage> createState() => _JobDetailPageState();
+}
+
+class _JobDetailPageState extends State<JobDetailPage> {
+  String? _requestedRefreshForJobId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _ensureJobFreshIfNeeded();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant JobDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.jobId != widget.jobId ||
+        oldWidget.isPreviewOnly != widget.isPreviewOnly) {
+      _requestedRefreshForJobId = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _ensureJobFreshIfNeeded();
+      });
+    }
+  }
+
+  void _ensureJobFreshIfNeeded() {
+    final bloc = context.read<JobsBloc>();
+    final blocJob = bloc.state.findJobById(widget.jobId);
+    final needsRefresh = blocJob == null || widget.isPreviewOnly;
+
+    if (needsRefresh &&
+        _requestedRefreshForJobId != widget.jobId &&
+        bloc.state.status != JobsStatus.loading) {
+      _requestedRefreshForJobId = widget.jobId;
+      bloc.add(const JobsRefreshRequestedEvent(showFeedback: false));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,26 +71,87 @@ class JobDetailPage extends StatelessWidget {
 
     return BlocBuilder<JobsBloc, JobsState>(
       builder: (context, state) {
-        final job = state.findJobById(jobId) ?? initialJob;
-        if (job == null) {
+        final blocJob = state.findJobById(widget.jobId);
+        final initial = widget.initialJob;
+        final JobEntity? candidateJob = (blocJob != null && initial != null)
+            ? (blocJob.description.trim().length >=
+                    initial.description.trim().length
+                ? blocJob
+                : initial)
+            : (blocJob ?? initial);
+
+        if (candidateJob == null) {
+          final isStillLoading = state.status == JobsStatus.initial ||
+              state.status == JobsStatus.loading;
+          final effectiveUrl = widget.fallbackUrl?.trim();
+          final hasFallbackUrl =
+              effectiveUrl != null && effectiveUrl.isNotEmpty;
+
           return Scaffold(
             appBar: AppBar(title: Text(s.jobDetailsTitle)),
             body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(s.noResults),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () => context.go('/'),
-                    child: const Text('DevScout'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isStillLoading) ...[
+                      const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(strokeWidth: 2.4),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        s.loadingJobs,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        s.noResults,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    if (hasFallbackUrl) ...[
+                      const SizedBox(height: 18),
+                      FilledButton.icon(
+                        onPressed: () {
+                          sl<DeepLinkService>().openOriginalJobUrl(
+                            effectiveUrl,
+                            context: context,
+                          );
+                        },
+                        icon: const Icon(Icons.north_east_rounded, size: 17),
+                        label: Text(s.viewInSource),
+                      ),
+                    ],
+                    if (!isStillLoading) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => context
+                            .read<JobsBloc>()
+                            .add(const JobsRefreshRequestedEvent()),
+                        icon: const Icon(Icons.refresh_rounded, size: 17),
+                        label: Text(s.isFa ? 'تلاش مجدد' : 'Retry'),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () => context.go('/'),
+                      child: const Text('DevScout'),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
         }
 
+        final JobEntity job = candidateJob;
         final isBookmarked = state.bookmarkedIds.contains(job.id);
 
         return Scaffold(

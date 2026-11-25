@@ -63,7 +63,106 @@ function initFirebase() {
 }
 
 /**
- * ارسال پیام پوش آنی به تاپیک
+ * ساخت شرط تاپیک برای ارسال دقیقاً یک پیام واحد بدون تکرار بین دسته‌بندی و تخصص
+ */
+function buildFcmCondition(job) {
+  const categoryTopic =
+    job.tabCategory === 'freelance'
+      ? 'freelance_projects'
+      : 'employment_jobs';
+
+  const skillsText = Array.isArray(job.skills) ? job.skills.join(' ') : '';
+  const combined = `${job.title || ''} ${job.description || ''} ${skillsText}`;
+
+  const isFlutter =
+    job.isFlutter === true ||
+    /flutter|فلاتر|dart|دارت/i.test(combined) ||
+    job.topic === 'flutter_jobs';
+  const isAndroid =
+    job.isAndroid === true ||
+    /android|اندروید|kotlin|کاتلین|\bjava\b|جاوا/i.test(combined);
+
+  let roleExpr;
+  if (isFlutter && !isAndroid) {
+    roleExpr = "'flutter_jobs' in topics";
+  } else if (isAndroid && !isFlutter) {
+    roleExpr = "'android_jobs' in topics";
+  } else {
+    roleExpr = "('flutter_jobs' in topics || 'android_jobs' in topics)";
+  }
+
+  return `${roleExpr} && '${categoryTopic}' in topics`;
+}
+
+function truncateStr(val, maxLen) {
+  if (val === undefined || val === null) return '';
+  const str = String(val).trim();
+  if (str.length <= maxLen) return str;
+  return `${str.slice(0, Math.max(0, maxLen - 1))}…`;
+}
+
+/**
+ * ساخت پیلود کامل و ایمن زیر سقف ۴۰۹۶ بایت FCM برای باز شدن آنی جزئیات در اپ
+ */
+function buildSafeFcmData(job) {
+  const workMode =
+    job.workModeKey ||
+    (String(job.workMode || '').includes('دورکار')
+      ? 'remote'
+      : String(job.workMode || '').includes('هیبرید')
+        ? 'hybrid'
+        : 'onSite');
+
+  const sourceKey =
+    job.sourceKey ||
+    (String(job.id || '').split('_')[0] || 'jobinja');
+
+  const skillsArray = Array.isArray(job.skills)
+    ? job.skills.slice(0, 5).map((s) => String(s))
+    : [];
+
+  const data = {
+    id: String(job.id || ''),
+    jobId: String(job.id || ''),
+    title: truncateStr(job.title || '', 180),
+    company: truncateStr(job.company || job.companyOrClient || '', 120),
+    source: truncateStr(job.source || '', 40),
+    sourceKey: String(sourceKey),
+    salary: truncateStr(job.salaryOrBudget || 'توافقی', 100),
+    city: truncateStr(job.city || 'ایران', 80),
+    workMode: String(workMode),
+    contractType: truncateStr(job.contractType || '', 80),
+    description: truncateStr(job.description || '', 700),
+    skills: JSON.stringify(skillsArray),
+    publishedAt: String(job.publishedAt || new Date().toISOString()),
+    publishedTimeText: truncateStr(job.publishedTimeText || 'جدید', 40),
+    proposalsCountText: truncateStr(job.proposalsCountText || '', 60),
+    isUrgent: job.isUrgent === true ? 'true' : 'false',
+    url: String(job.originalUrl || ''),
+    click_action: 'FLUTTER_NOTIFICATION_CLICK',
+  };
+
+  if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 3400) {
+    data.description = truncateStr(job.description || '', 300);
+  }
+  if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 3400) {
+    data.description = truncateStr(job.description || '', 120);
+  }
+  if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 3400) {
+    data.description = '';
+  }
+  if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 3400) {
+    data.skills = '[]';
+    data.title = truncateStr(job.title || '', 100);
+    data.company = truncateStr(job.company || job.companyOrClient || '', 60);
+    data.contractType = truncateStr(job.contractType || '', 40);
+  }
+
+  return data;
+}
+
+/**
+ * ارسال یک پیام پوش آنی یکتا به ترکیب تاپیک‌ها (بدون ارسال تکراری)
  */
 async function sendJobPushNotification(job) {
   if (!initFirebase()) {
@@ -73,12 +172,10 @@ async function sendJobPushNotification(job) {
     return false;
   }
 
-  // انتخاب تاپیک اصلی
-  const mainTopic = job.topic || 'flutter_jobs';
-  const categoryTopic =
-    job.tabCategory === 'freelance'
-      ? 'freelance_projects'
-      : 'employment_jobs';
+  const condition = buildFcmCondition(job);
+  const safeTag = String(job.id)
+    .replace(/[^a-zA-Z0-9_.-]/g, '_')
+    .slice(0, 64);
 
   // ساخت بدنه اعلان
   const title = `🔔 ${job.source}: ${job.title}`;
@@ -87,23 +184,18 @@ async function sendJobPushNotification(job) {
     : `📍 ${job.city} (${job.workMode}) | 💰 ${job.salaryOrBudget}`;
 
   const message = {
-    // ارسال به تاپیک مربوطه
-    topic: mainTopic,
+    condition,
     notification: {
       title,
       body,
     },
-    data: {
-      id: String(job.id),
-      jobId: String(job.id),
-      url: String(job.originalUrl),
-      source: String(job.source),
-      click_action: 'FLUTTER_NOTIFICATION_CLICK',
-    },
+    data: buildSafeFcmData(job),
     android: {
       priority: 'high',
+      collapseKey: safeTag,
       notification: {
         channelId: 'job_radar_high_importance_channel',
+        tag: safeTag,
         sound: 'default',
         priority: 'max',
         visibility: 'public',
@@ -115,14 +207,9 @@ async function sendJobPushNotification(job) {
 
   try {
     const response = await admin.messaging().send(message);
-    console.log(`🚀 [FCM Push Sent] -> Topic: ${mainTopic} | ID: ${job.id} | Response: ${response}`);
-
-    // همچنین به تاپیک دسته‌بندی فریلنسری / استخدامی هم فرستاده شود
-    if (categoryTopic && categoryTopic !== mainTopic) {
-      const catMessage = { ...message, topic: categoryTopic };
-      await admin.messaging().send(catMessage);
-    }
-
+    console.log(
+      `🚀 [FCM Push Sent] -> Condition: (${condition}) | ID: ${job.id} | Response: ${response}`
+    );
     return true;
   } catch (err) {
     console.error(`❌ [FCM Push Error] for ${job.id}:`, err.message);
@@ -140,23 +227,43 @@ async function sendTestPushNotification({ title, body } = {}) {
     );
   }
 
+  const testTitle = title || '🔔 تست اعلان DevScout مثل تلگرام (اپ بسته است)';
+  const testBody =
+    body ||
+    'این اعلان از طریق سرور ابری فایربیس و بدون مصرف باتری ارسال شده است. ضربه بزنید تا برنامه باز شود!';
+
+  const testJob = {
+    id: 'test_cloud_push',
+    title: testTitle,
+    company: 'DevScout Cloud',
+    source: 'پونیشا',
+    sourceKey: 'ponisha',
+    salaryOrBudget: 'توافقی',
+    city: 'سراسر ایران (آنلاین)',
+    workMode: 'دورکاری',
+    workModeKey: 'remote',
+    contractType: 'تست پوش نوتیفیکیشن',
+    description: testBody,
+    skills: ['Flutter', 'Firebase'],
+    publishedTimeText: 'هم‌اکنون',
+    publishedAt: new Date().toISOString(),
+    originalUrl: 'https://ponisha.ir',
+    isUrgent: false,
+  };
+
   const message = {
     topic: 'flutter_jobs',
     notification: {
-      title: title || '🔔 تست اعلان DevScout مثل تلگرام (اپ بسته است)',
-      body:
-        body ||
-        'این اعلان از طریق سرور ابری فایربیس و بدون مصرف باتری ارسال شده است. ضربه بزنید تا برنامه باز شود!',
+      title: testTitle,
+      body: testBody,
     },
-    data: {
-      jobId: 'test_cloud_push',
-      url: 'https://ponisha.ir',
-      click_action: 'FLUTTER_NOTIFICATION_CLICK',
-    },
+    data: buildSafeFcmData(testJob),
     android: {
       priority: 'high',
+      collapseKey: 'test_cloud_push',
       notification: {
         channelId: 'job_radar_high_importance_channel',
+        tag: 'test_cloud_push',
         sound: 'default',
         priority: 'max',
         visibility: 'public',
@@ -175,4 +282,6 @@ module.exports = {
   initFirebase,
   sendJobPushNotification,
   sendTestPushNotification,
+  buildFcmCondition,
+  buildSafeFcmData,
 };
