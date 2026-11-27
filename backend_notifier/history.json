@@ -1,6 +1,6 @@
 {
-  "lastRun": "2026-11-27T05:21:57.952Z",
-  "count": 528,
+  "lastRun": "2026-11-27T10:01:31.039Z",
+  "count": 529,
   "seenIds": [
     "karlancer_337085",
     "karlancer_337036",
@@ -418,14 +418,13 @@
     "karlancer_342143",
     "karlancer_342076",
     "jobvision_1617201",
-    "karlancer_125642",
     "karlancer_343020",
     "karlancer_342176",
-    "karlancer_126005",
     "karlancer_342208",
     "karlancer_343616",
-    "karlancer_343557",
     "karlancer_343492",
+    "karlancer_336471",
+    "karlancer_343557",
     "karlancer_343487",
     "karlancer_343437",
     "karlancer_343416",
@@ -492,7 +491,6 @@
     "jobinja_tMIe",
     "jobinja_tMlJ",
     "jobinja_tMdL",
-    "karlancer_336471",
     "jobvision_1581487",
     "jobinja_tM7a",
     "jobinja_tMPk",
@@ -529,6 +527,9 @@
     "karlancer_128897",
     "karlancer_128791",
     "karlancer_126377",
-    "karlancer_126909"
+    "karlancer_126909",
+    "karlancer_126005",
+    "karlancer_125642",
+    "karlancer_343724"
   ]
 }
